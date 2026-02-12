@@ -18,3 +18,9 @@ reportlab
 
 # Pour email
 email-validator
+
+# Pour JWT tokens
+PyJWT
+
+# Pour form data handling
+python-multipart
