@@ -7,7 +7,8 @@ import jwt
 from passlib.context import CryptContext
 import os
 
-from ..models import User, User_Pydantic, RoleEnum
+from ..models import User, User_Pydantic
+from ..schemas import UserCreate
 
 # =========================
 # CONFIGURATION
@@ -30,6 +31,9 @@ def verify_password(plain_password: str, hashed_password: str):
     return pwd_context.verify(plain_password, hashed_password)
 
 def hash_password(password: str):
+    # bcrypt has a 72-byte limit, truncate if necessary
+    if len(password.encode('utf-8')) > 72:
+        password = password[:72]
     return pwd_context.hash(password)
 
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -69,22 +73,27 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 # =========================
 
 @router.post("/register", response_model=User_Pydantic)
-async def register(username: str, password: str, role: RoleEnum, service_id: int):
+async def register(user: UserCreate):
 
-    existing_user = await User.get_or_none(username=username)
+    existing_user = await User.get_or_none(username=user.username)
     if existing_user:
         raise HTTPException(status_code=400, detail="Username déjà utilisé")
 
-    hashed = hash_password(password)
+    # # Vérifier que le service existe
+    # from ..models import Service
+    # service = await Service.get_or_none(id=user.service_id)
+    # if not service:
+    #     raise HTTPException(status_code=400, detail="Service non trouvé")
 
-    user = await User.create(
-        username=username,
+    hashed = hash_password(user.password)
+
+    new_user = await User.create(
+        username=user.username,
         password=hashed,
-        role=role,
-        service_id=service_id
     )
 
-    return await User_Pydantic.from_tortoise_orm(user)
+    return await User_Pydantic.from_tortoise_orm(new_user)
+
 
 # =========================
 # LOGIN
@@ -103,9 +112,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
 
     access_token = create_access_token(
         data={
-            "sub": user.username,
-            "role": user.role,
-            "service_id": user.service_id
+            "sub": user.username
         }
     )
 

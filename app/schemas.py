@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from enum import Enum
 
 # Enum rôle pour validation
@@ -9,9 +9,7 @@ class RoleEnum(str, Enum):
 # Création d'utilisateur
 class UserCreate(BaseModel):
     username: str
-    password: str
-    role: RoleEnum
-    service_id: int
+    password: str = Field(..., min_length=1, max_length=72, description="Password must be 1-72 characters")
 
 # Création Service
 class ServiceCreate(BaseModel):

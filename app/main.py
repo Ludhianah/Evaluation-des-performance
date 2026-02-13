@@ -1,7 +1,6 @@
 from fastapi import FastAPI
-from .database import init_db, close_db
-from .routers import evaluation
-from .routers import auth  
+from tortoise.contrib.fastapi import register_tortoise
+from .routers import evaluation, auth, services
 
 app = FastAPI(
     title="API Évaluation Mensuelle",
@@ -9,28 +8,20 @@ app = FastAPI(
     version="1.0"
 )
 
-
-# Événements startup / shutdown
-
-
-@app.on_event("startup")
-async def startup_event():
-    await init_db()
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    await close_db()
-
-
-# Route de test
-
-
 @app.get("/")
 def home():
     return {"message": "API Évaluation opérationnelle"}
 
-
 # Inclusion des routeurs
+app.include_router(auth.router)
+app.include_router(evaluation.router)
+app.include_router(services.router)
 
-app.include_router(auth.router)        # ✅ Authentification
-app.include_router(evaluation.router)  # ✅ Évaluations
+# 🔥 Initialisation officielle Tortoise
+register_tortoise(
+    app,
+    db_url="postgres://postgres:postgres@db:5432/postgres",
+    modules={"models": ["app.models"]},
+    generate_schemas=True,
+    add_exception_handlers=True,
+)

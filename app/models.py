@@ -3,12 +3,6 @@ from tortoise import fields
 from tortoise.contrib.pydantic import pydantic_model_creator
 from enum import Enum
 
-# -----------------------------
-# 1️⃣ Enum pour les rôles
-# -----------------------------
-class RoleEnum(str, Enum):
-    ADMIN = "ADMIN"
-    RESPONSABLE = "RESPONSABLE"
 
 # -----------------------------
 # 2️⃣ Table Service
@@ -31,11 +25,6 @@ class User(Model):
     id = fields.IntField(pk=True)
     username = fields.CharField(max_length=255, unique=True)
     password = fields.CharField(max_length=255)  # mot de passe hashé
-    role = fields.CharEnumField(RoleEnum)
-
-    service: fields.ForeignKeyRelation[Service] = fields.ForeignKeyField(
-        "models.Service", related_name="utilisateurs"
-    )
 
     # Relation avec les évaluations créées
     evaluations: fields.ReverseRelation["Evaluation"]
