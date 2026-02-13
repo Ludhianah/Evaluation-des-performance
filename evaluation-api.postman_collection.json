@@ -330,6 +330,377 @@
       ]
     },
     {
+      "name": "Objectifs",
+      "item": [
+        {
+          "name": "Create Objectif",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Améliorer la productivité\",\n  \"mois\": 3,\n  \"annee\": 2024,\n  \"service_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/objectifs/",
+              "host": ["{{baseUrl}}"],
+              "path": ["objectifs", ""]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"libelle\": \"Améliorer la productivité\",\n  \"mois\": 3,\n  \"annee\": 2024,\n  \"service_id\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Objectifs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/objectifs/",
+              "host": ["{{baseUrl}}"],
+              "path": ["objectifs", ""]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"libelle\": \"Améliorer la productivité\",\n    \"mois\": 3,\n    \"annee\": 2024,\n    \"service_id\": 1\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Objectif by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/objectifs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["objectifs", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"libelle\": \"Améliorer la productivité\",\n  \"mois\": 3,\n  \"annee\": 2024,\n  \"service_id\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Objectif",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Objectif mis à jour\",\n  \"mois\": 4,\n  \"service_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/objectifs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["objectifs", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"libelle\": \"Objectif mis à jour\",\n  \"mois\": 4,\n  \"annee\": 2024,\n  \"service_id\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Objectif",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/objectifs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["objectifs", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Objectif supprimé avec succès\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Indicateurs",
+      "item": [
+        {
+          "name": "Create Indicateur Quantitatif",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Taux de réalisation\",\n  \"type\": \"QUANTITATIF\",\n  \"valeur_cible\": 100.0,\n  \"objectif_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/indicateurs/",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicateurs", ""]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"libelle\": \"Taux de réalisation\",\n  \"type\": \"QUANTITATIF\",\n  \"valeur_cible\": 100.0,\n  \"objectif_id\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Create Indicateur Qualitatif",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Qualité du service\",\n  \"type\": \"QUALITATIF\",\n  \"objectif_id\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/indicateurs/",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicateurs", ""]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 2,\n  \"libelle\": \"Qualité du service\",\n  \"type\": \"QUALITATIF\",\n  \"valeur_cible\": null,\n  \"objectif_id\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "List Indicateurs",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/indicateurs/",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicateurs", ""]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"libelle\": \"Taux de réalisation\",\n    \"type\": \"QUANTITATIF\",\n    \"valeur_cible\": 100.0,\n    \"objectif_id\": 1\n  },\n  {\n    \"id\": 2,\n    \"libelle\": \"Qualité du service\",\n    \"type\": \"QUALITATIF\",\n    \"valeur_cible\": null,\n    \"objectif_id\": 1\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Get Indicateur by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/indicateurs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicateurs", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"libelle\": \"Taux de réalisation\",\n  \"type\": \"QUANTITATIF\",\n  \"valeur_cible\": 100.0,\n  \"objectif_id\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Indicateur",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"libelle\": \"Nouveau libellé\",\n  \"type\": \"QUANTITATIF\",\n  \"valeur_cible\": 95.0\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/indicateurs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicateurs", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"id\": 1,\n  \"libelle\": \"Nouveau libellé\",\n  \"type\": \"QUANTITATIF\",\n  \"valeur_cible\": 95.0,\n  \"objectif_id\": 1\n}"
+            }
+          ]
+        },
+        {
+          "name": "Delete Indicateur",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/indicateurs/1",
+              "host": ["{{baseUrl}}"],
+              "path": ["indicateurs", "1"]
+            }
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Indicateur supprimé avec succès\"\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Évaluations",
       "item": [
         {

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from tortoise.contrib.fastapi import register_tortoise
-from .routers import evaluation, auth, services
+
+# Import des routeurs
+from .routers import auth, services, indicateurs, objectifs, evaluation
 
 app = FastAPI(
     title="API Évaluation Mensuelle",
@@ -14,8 +16,10 @@ def home():
 
 # Inclusion des routeurs
 app.include_router(auth.router)
-app.include_router(evaluation.router)
 app.include_router(services.router)
+app.include_router(indicateurs.router)
+app.include_router(objectifs.router)
+app.include_router(evaluation.router)
 
 # 🔥 Initialisation officielle Tortoise
 register_tortoise(
