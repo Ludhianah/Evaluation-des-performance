@@ -25,10 +25,14 @@ export const AuthProvider = ({ children }) => {
     setError(null);
     
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/token`, null, {
-        params: {
-          username,
-          password
+      // Use form data format for OAuth2PasswordRequestForm
+      const formData = new URLSearchParams();
+      formData.append('username', username);
+      formData.append('password', password);
+      
+      const response = await axios.post(`${API_BASE_URL}/auth/token`, formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
         }
       });
       
