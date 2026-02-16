@@ -5,6 +5,10 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Objectifs from './pages/Objectifs';
+import Indicateurs from './pages/Indicateurs';
+import Evaluations from './pages/Evaluations';
+import DashboardLayout from './components/DashboardLayout';
 
 function App() {
   return (
@@ -17,14 +21,32 @@ function App() {
             <Route path="/register" element={<Register />} />
             
             {/* Protected routes */}
-            <Route 
-              path="/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <Dashboard />
-                </ProtectedRoute>
-              } 
-            />
+            <Route path="/dashboard" element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/objectifs" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Objectifs />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/indicateurs" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Indicateurs />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/evaluations" element={
+              <ProtectedRoute>
+                <DashboardLayout>
+                  <Evaluations />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
             
             {/* Default redirect */}
             <Route path="/" element={<Navigate to="/dashboard" />} />
