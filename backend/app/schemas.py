@@ -17,7 +17,7 @@ class UserCreate(BaseModel):
     password: str = Field(
         ..., min_length=1, max_length=72, description="Password must be 1-72 characters"
     )
-    role: Optional[str] = "RESPONSABLE"  # par défaut RESPONSABLE
+    role: str  # role is now required
     service_id: Optional[int] = None      # autoriser null pour ADMIN
 # -----------------------------
 # Création Service

@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from passlib.context import CryptContext
+from pydantic import BaseModel
 from tortoise.exceptions import IntegrityError
 from datetime import datetime, timedelta
 from typing import Optional
@@ -9,6 +10,11 @@ import os
 
 from ..models import User, User_Pydantic
 from ..schemas import UserCreate
+
+# Pydantic model for JSON login
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 # =========================
 # CONFIGURATION
@@ -93,6 +99,16 @@ async def register(user_data: UserCreate):
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     user = await User.get_or_none(username=form_data.username)
     if not user or not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Identifiants invalides")
+
+    access_token = create_access_token(data={"sub": user.id})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+# Alternative endpoint for JSON login
+@router.post("/login")
+async def login_json(login_data: LoginRequest):
+    user = await User.get_or_none(username=login_data.username)
+    if not user or not verify_password(login_data.password, user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Identifiants invalides")
 
     access_token = create_access_token(data={"sub": user.id})

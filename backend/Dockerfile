@@ -11,7 +11,7 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copier le code de l’application
-COPY . .
+COPY . /app/
 
-# Lancer le serveur FastAPI
+# Lancer le serveur FastAPI avec hot reload pour le développement
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
