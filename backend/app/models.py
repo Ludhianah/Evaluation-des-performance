@@ -5,35 +5,52 @@ from enum import Enum
 
 
 # -----------------------------
-# 2️⃣ Table Service
+# ENUM ROLE
+# -----------------------------
+class RoleEnum(str, Enum):
+    ADMIN = "ADMIN"
+    RESPONSABLE = "RESPONSABLE"
+
+
+# -----------------------------
+# Table Service
 # -----------------------------
 class Service(Model):
     id = fields.IntField(pk=True)
     nom = fields.CharField(max_length=255, unique=True)
 
-    # Relation avec utilisateurs et objectifs
     utilisateurs: fields.ReverseRelation["User"]
     objectifs: fields.ReverseRelation["Objectif"]
 
     class Meta:
         table = "services"
 
+
 # -----------------------------
-# 3️⃣ Table User (responsable/admin)
+# Table User (admin / responsable)
 # -----------------------------
 class User(Model):
     id = fields.IntField(pk=True)
     username = fields.CharField(max_length=255, unique=True)
-    password = fields.CharField(max_length=255)  # mot de passe hashé
+    password = fields.CharField(max_length=255)
 
-    # Relation avec les évaluations créées
+    role = fields.CharEnumField(RoleEnum, default=RoleEnum.RESPONSABLE)
+
+    # 🔥 Un responsable appartient à un service
+    service: fields.ForeignKeyRelation[Service] = fields.ForeignKeyField(
+        "models.Service",
+        related_name="utilisateurs",
+        null=True
+    )
+
     evaluations: fields.ReverseRelation["Evaluation"]
 
     class Meta:
         table = "users"
 
+
 # -----------------------------
-# 4️⃣ Table Objectif
+# Table Objectif
 # -----------------------------
 class Objectif(Model):
     id = fields.IntField(pk=True)
@@ -50,18 +67,20 @@ class Objectif(Model):
     class Meta:
         table = "objectifs"
 
+
 # -----------------------------
-# 5️⃣ Table Indicateur
+# Table Indicateur
 # -----------------------------
 class TypeIndicateurEnum(str, Enum):
     QUANTITATIF = "QUANTITATIF"
     QUALITATIF = "QUALITATIF"
 
+
 class Indicateur(Model):
     id = fields.IntField(pk=True)
     libelle = fields.CharField(max_length=255)
     type = fields.CharEnumField(TypeIndicateurEnum)
-    valeur_cible = fields.FloatField(null=True)  # NULL si qualitatif
+    valeur_cible = fields.FloatField(null=True)
 
     objectif: fields.ForeignKeyRelation[Objectif] = fields.ForeignKeyField(
         "models.Objectif", related_name="indicateurs"
@@ -72,8 +91,9 @@ class Indicateur(Model):
     class Meta:
         table = "indicateurs"
 
+
 # -----------------------------
-# 6️⃣ Table Evaluation mensuelle
+# Table Evaluation mensuelle
 # -----------------------------
 class Evaluation(Model):
     id = fields.IntField(pk=True)
@@ -95,7 +115,10 @@ class Evaluation(Model):
         table = "evaluations"
         unique_together = [("employe", "indicateur", "mois", "annee")]
 
-# Création des pydantic models pour la validation
+
+# -----------------------------
+# Pydantic Models
+# -----------------------------
 Service_Pydantic = pydantic_model_creator(Service, name="Service")
 ServiceIn_Pydantic = pydantic_model_creator(Service, name="ServiceIn", exclude_readonly=True)
 

@@ -52,7 +52,7 @@
                   "value": "application/json"
                 }
               ],
-              "body": "{\n  \"id\": 1,\n  \"username\": \"admin\",\n  \"role\": \"ADMIN\",\n  \"service_id\": null\n}"
+          "body": "{\n  \"id\": 1,\n  \"username\": \"admin\",\n  \"role\": \"ADMIN\",\n  \"service_id\": null\n}"
             }
           ]
         },

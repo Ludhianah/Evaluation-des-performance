@@ -7,23 +7,26 @@ import {
   PlusCircleIcon,
   DocumentTextIcon
 } from '@heroicons/react/24/outline';
+import { useAuth } from '../context/AuthContext';
 
 const Sidebar = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   const navigation = [
-    {
+    ...(isAdmin ? [{
       name: 'Objectifs',
       href: '/dashboard/objectifs',
       icon: ChartBarIcon,
       current: location.pathname === '/dashboard/objectifs'
-    },
-    {
+    }] : []),
+    ...(isAdmin ? [{
       name: 'Indicateurs',
       href: '/dashboard/indicateurs',
       icon: Cog6ToothIcon,
       current: location.pathname === '/dashboard/indicateurs'
-    },
+    }] : []),
     {
       name: 'Évaluations',
       href: '/dashboard/evaluations',
@@ -35,7 +38,14 @@ const Sidebar = () => {
   return (
     <div className="fixed inset-y-0 left-0 bg-white border-r border-gray-200 w-64 flex flex-col">
       <div className="flex items-center justify-center h-16 bg-gray-50 border-b border-gray-200">
-        <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
+        <div className="text-center">
+          <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
+          <p className={`text-xs mt-1 ${
+            isAdmin ? 'text-blue-600' : 'text-green-600'
+          }`}>
+            {user?.role || 'Utilisateur'}
+          </p>
+        </div>
       </div>
       
       <nav className="flex-1 px-4 py-4 space-y-2 overflow-y-auto">

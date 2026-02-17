@@ -6,9 +6,9 @@ import jwt
 from passlib.context import CryptContext
 
 from ..models import Indicateur, Indicateur_Pydantic, IndicateurIn_Pydantic, Objectif, User
-from ..schemas import IndicateurCreate
+from ..schemas import IndicateurCreate, RoleEnum
 
-# Configuration pour JWT (copier depuis auth.py)
+# Configuration JWT (copiée depuis auth.py)
 SECRET_KEY = "super_secret_key_change_me"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
@@ -58,12 +58,17 @@ router = APIRouter(prefix="/indicateurs", tags=["Indicateurs"])
 @router.post("/", response_model=Indicateur_Pydantic)
 async def creer_indicateur(
     indicateur_data: IndicateurCreate,
-    current_user: User = Depends(get_current_user)  # ✅ protection JWT
+    current_user: User = Depends(get_current_user)
 ):
     # Vérifier si l'objectif existe
     objectif = await Objectif.get_or_none(id=indicateur_data.objectif_id)
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
+
+    # Vérifier le rôle si RESPONSABLE
+    if getattr(current_user, "role", None) == RoleEnum.RESPONSABLE.value:
+        if objectif.service_id != current_user.service_id:
+            raise HTTPException(status_code=403, detail="Vous ne pouvez créer un indicateur que pour votre service")
 
     # Pour les indicateurs qualitatifs, la valeur_cible doit être NULL
     if indicateur_data.type == "QUALITATIF":
@@ -83,7 +88,13 @@ async def creer_indicateur(
 # 📋 Lister tous les indicateurs
 # ================================
 @router.get("/", response_model=List[Indicateur_Pydantic])
-async def lister_indicateurs():
+async def lister_indicateurs(current_user: User = Depends(get_current_user)):
+    if getattr(current_user, "role", None) == RoleEnum.RESPONSABLE.value:
+        # Ne retourner que les indicateurs liés aux objectifs du service du responsable
+        return await Indicateur_Pydantic.from_queryset(
+            Indicateur.filter(objectif__service_id=current_user.service_id)
+        )
+    # ADMIN voit tout
     return await Indicateur_Pydantic.from_queryset(Indicateur.all())
 
 
@@ -91,10 +102,16 @@ async def lister_indicateurs():
 # 🔍 Obtenir un indicateur par ID
 # ================================
 @router.get("/{indicateur_id}", response_model=Indicateur_Pydantic)
-async def obtenir_indicateur(indicateur_id: int):
+async def obtenir_indicateur(indicateur_id: int, current_user: User = Depends(get_current_user)):
     indicateur = await Indicateur.get_or_none(id=indicateur_id)
     if not indicateur:
         raise HTTPException(status_code=404, detail="Indicateur non trouvé")
+
+    # Vérifier accès RESPONSABLE
+    if getattr(current_user, "role", None) == RoleEnum.RESPONSABLE.value:
+        if indicateur.objectif.service_id != current_user.service_id:
+            raise HTTPException(status_code=403, detail="Accès refusé à cet indicateur")
+
     return await Indicateur_Pydantic.from_tortoise_orm(indicateur)
 
 
@@ -105,11 +122,16 @@ async def obtenir_indicateur(indicateur_id: int):
 async def mettre_a_jour_indicateur(
     indicateur_id: int,
     indicateur_data: IndicateurIn_Pydantic,
-    current_user: User = Depends(get_current_user)  # ✅ protection JWT
+    current_user: User = Depends(get_current_user)
 ):
     indicateur = await Indicateur.get_or_none(id=indicateur_id)
     if not indicateur:
         raise HTTPException(status_code=404, detail="Indicateur non trouvé")
+
+    # Vérifier accès RESPONSABLE
+    if getattr(current_user, "role", None) == RoleEnum.RESPONSABLE.value:
+        if indicateur.objectif.service_id != current_user.service_id:
+            raise HTTPException(status_code=403, detail="Vous ne pouvez modifier que les indicateurs de votre service")
 
     # Pour les indicateurs qualitatifs, la valeur_cible doit être NULL
     if hasattr(indicateur_data, 'type') and indicateur_data.type == "QUALITATIF":
@@ -126,11 +148,16 @@ async def mettre_a_jour_indicateur(
 @router.delete("/{indicateur_id}")
 async def supprimer_indicateur(
     indicateur_id: int,
-    current_user: User = Depends(get_current_user)  # ✅ protection JWT
+    current_user: User = Depends(get_current_user)
 ):
     indicateur = await Indicateur.get_or_none(id=indicateur_id)
     if not indicateur:
         raise HTTPException(status_code=404, detail="Indicateur non trouvé")
+
+    # Vérifier accès RESPONSABLE
+    if getattr(current_user, "role", None) == RoleEnum.RESPONSABLE.value:
+        if indicateur.objectif.service_id != current_user.service_id:
+            raise HTTPException(status_code=403, detail="Vous ne pouvez supprimer que les indicateurs de votre service")
 
     await indicateur.delete()
     return {"message": "Indicateur supprimé avec succès"}

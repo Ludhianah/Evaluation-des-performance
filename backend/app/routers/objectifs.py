@@ -1,70 +1,55 @@
 from fastapi import APIRouter, HTTPException, Depends, status
-from fastapi.security import OAuth2PasswordBearer
 from tortoise.exceptions import IntegrityError
 from typing import List
 import jwt
-from passlib.context import CryptContext
 
 from ..models import Objectif, Objectif_Pydantic, ObjectifIn_Pydantic, Service, User
 from ..schemas import ObjectifCreate
-
-# Configuration pour JWT (copier depuis auth.py)
-SECRET_KEY = "super_secret_key_change_me"
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60
-
-# OAuth2 scheme
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/token")
-
-# Password context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-async def get_user(username: str):
-    return await User.get_or_none(username=username)
-
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Token invalide ou manquant",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        if username is None:
-            raise credentials_exception
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token expiré",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    except jwt.PyJWTError:
-        raise credentials_exception
-
-    user = await get_user(username)
-    if user is None:
-        raise credentials_exception
-
-    return user
+from ..routers.auth import get_current_user
 
 router = APIRouter(prefix="/objectifs", tags=["Objectifs"])
 
+# -----------------------------
+# Vérification rôle ADMIN
+# -----------------------------
+async def admin_required(current_user: User = Depends(get_current_user)):
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Action réservée aux administrateurs"
+        )
+    return current_user
 
-# ================================
-# 🔐 Créer un objectif (protégé)
-# ================================
+# -----------------------------
+# Vérification rôle RESPONSABLE ou ADMIN pour son service
+# -----------------------------
+async def responsable_or_admin_for_service(service_id: int, current_user: User = Depends(get_current_user)):
+    if current_user.role == "ADMIN":
+        return current_user
+    elif current_user.role == "RESPONSABLE":
+        # Vérifier si le service appartient au responsable
+        service = await Service.get_or_none(id=service_id)
+        if not service:
+            raise HTTPException(status_code=404, detail="Service non trouvé")
+        if service.id != current_user.service_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Vous ne pouvez gérer que les objectifs de votre service"
+            )
+        return current_user
+    else:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Rôle non autorisé"
+        )
+
+
+# 🔐 Créer un objectif
 @router.post("/", response_model=Objectif_Pydantic)
 async def creer_objectif(
     objectif_data: ObjectifCreate,
-    current_user: User = Depends(get_current_user)  # ✅ protection JWT
+    current_user: User = Depends(lambda: responsable_or_admin_for_service(objectif_data.service_id))
 ):
-    # Vérifier si le service existe
-    service = await Service.get_or_none(id=objectif_data.service_id)
-    if not service:
-        raise HTTPException(status_code=404, detail="Service non trouvé")
-
     try:
         objectif = await Objectif.create(**objectif_data.dict())
         return await Objectif_Pydantic.from_tortoise_orm(objectif)
@@ -75,17 +60,13 @@ async def creer_objectif(
         )
 
 
-# ================================
-# 📋 Lister tous les objectifs
-# ================================
+# 📋 Lister tous les objectifs (TOUS les utilisateurs)
 @router.get("/", response_model=List[Objectif_Pydantic])
 async def lister_objectifs():
     return await Objectif_Pydantic.from_queryset(Objectif.all())
 
 
-# ================================
-# 🔍 Obtenir un objectif par ID
-# ================================
+# 🔍 Obtenir un objectif par ID (TOUS les utilisateurs)
 @router.get("/{objectif_id}", response_model=Objectif_Pydantic)
 async def obtenir_objectif(objectif_id: int):
     objectif = await Objectif.get_or_none(id=objectif_id)
@@ -94,41 +75,41 @@ async def obtenir_objectif(objectif_id: int):
     return await Objectif_Pydantic.from_tortoise_orm(objectif)
 
 
-# ================================
-# ✏️ Mettre à jour un objectif (protégé)
-# ================================
+# ✏️ Mettre à jour un objectif
 @router.put("/{objectif_id}", response_model=Objectif_Pydantic)
 async def mettre_a_jour_objectif(
     objectif_id: int,
     objectif_data: ObjectifIn_Pydantic,
-    current_user: User = Depends(get_current_user)  # ✅ protection JWT
+    current_user: User = Depends(get_current_user)
 ):
     objectif = await Objectif.get_or_none(id=objectif_id)
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
 
-    # Vérifier si le service existe (si le service_id est modifié)
-    if hasattr(objectif_data, 'service_id') and objectif_data.service_id:
-        service = await Service.get_or_none(id=objectif_data.service_id)
-        if not service:
-            raise HTTPException(status_code=404, detail="Service non trouvé")
+    # Vérification droits
+    await responsable_or_admin_for_service(objectif.service_id, current_user)
+
+    # Vérifier si le service change
+    if hasattr(objectif_data, "service_id") and objectif_data.service_id:
+        await responsable_or_admin_for_service(objectif_data.service_id, current_user)
 
     await objectif.update_from_dict(objectif_data.dict(exclude_unset=True))
     await objectif.save()
     return await Objectif_Pydantic.from_tortoise_orm(objectif)
 
 
-# ================================
-# 🗑 Supprimer un objectif (protégé)
-# ================================
+# 🗑 Supprimer un objectif
 @router.delete("/{objectif_id}")
 async def supprimer_objectif(
     objectif_id: int,
-    current_user: User = Depends(get_current_user)  # ✅ protection JWT
+    current_user: User = Depends(get_current_user)
 ):
     objectif = await Objectif.get_or_none(id=objectif_id)
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
+
+    # Vérification droits
+    await responsable_or_admin_for_service(objectif.service_id, current_user)
 
     await objectif.delete()
     return {"message": "Objectif supprimé avec succès"}

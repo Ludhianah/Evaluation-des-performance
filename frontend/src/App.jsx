@@ -27,14 +27,14 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="/dashboard/objectifs" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="ADMIN">
                 <DashboardLayout>
                   <Objectifs />
                 </DashboardLayout>
               </ProtectedRoute>
             } />
             <Route path="/dashboard/indicateurs" element={
-              <ProtectedRoute>
+              <ProtectedRoute requiredRole="ADMIN">
                 <DashboardLayout>
                   <Indicateurs />
                 </DashboardLayout>
