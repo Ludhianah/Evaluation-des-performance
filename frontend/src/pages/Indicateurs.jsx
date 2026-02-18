@@ -10,9 +10,10 @@ const Indicateurs = () => {
   const [editingIndicateur, setEditingIndicateur] = useState(null);
   
   const [formData, setFormData] = useState({
-    nom: '',
+    libelle: '',
     description: '',
-    cible: '',
+    type: 'QUANTITATIF',
+    valeur_cible: '',
     unite: '',
     objectif_id: ''
   });
@@ -59,14 +60,24 @@ const Indicateurs = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Convert string values to proper types for backend
+      const dataToSend = {
+        libelle: formData.libelle,
+        description: formData.description,
+        type: formData.type,
+        valeur_cible: formData.valeur_cible ? parseFloat(formData.valeur_cible) : null,
+        unite: formData.unite,
+        objectif_id: formData.objectif_id ? parseInt(formData.objectif_id) : null
+      };
+
       if (editingIndicateur) {
-        await axios.put(`http://localhost:8000/indicateurs/${editingIndicateur.id}`, formData, {
+        await axios.put(`http://localhost:8000/indicateurs/${editingIndicateur.id}`, dataToSend, {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
       } else {
-        await axios.post('http://localhost:8000/indicateurs/', formData, {
+        await axios.post('http://localhost:8000/indicateurs/', dataToSend, {
           headers: {
             Authorization: `Bearer ${token}`
           }
@@ -74,7 +85,7 @@ const Indicateurs = () => {
       }
       setIsModalOpen(false);
       setEditingIndicateur(null);
-      setFormData({ nom: '', description: '', cible: '', unite: '', objectif_id: '' });
+      setFormData({ libelle: '', description: '', type: 'QUANTITATIF', valeur_cible: '', unite: '', objectif_id: '' });
       fetchIndicateurs();
     } catch (err) {
       setError(editingIndicateur ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
@@ -101,9 +112,10 @@ const Indicateurs = () => {
   const handleEdit = (indicateur) => {
     setEditingIndicateur(indicateur);
     setFormData({
-      nom: indicateur.nom,
+      libelle: indicateur.libelle,
       description: indicateur.description,
-      cible: indicateur.cible,
+      type: indicateur.type || 'QUANTITATIF',
+      valeur_cible: indicateur.valeur_cible,
       unite: indicateur.unite,
       objectif_id: indicateur.objectif_id
     });
@@ -112,7 +124,7 @@ const Indicateurs = () => {
 
   const openModal = () => {
     setEditingIndicateur(null);
-    setFormData({ nom: '', description: '', cible: '', unite: '', objectif_id: '' });
+    setFormData({ libelle: '', description: '', type: 'QUANTITATIF', valeur_cible: '', unite: '', objectif_id: '' });
     setIsModalOpen(true);
   };
 
@@ -198,12 +210,12 @@ const Indicateurs = () => {
               <form onSubmit={handleSubmit}>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Nom</label>
+                    <label className="block text-sm font-medium text-gray-700">Libellé</label>
                     <input
                       type="text"
                       required
-                      value={formData.nom}
-                      onChange={(e) => setFormData({...formData, nom: e.target.value})}
+                      value={formData.libelle}
+                      onChange={(e) => setFormData({...formData, libelle: e.target.value})}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
@@ -230,13 +242,23 @@ const Indicateurs = () => {
                     </select>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Cible</label>
+                    <label className="block text-sm font-medium text-gray-700">Type</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({...formData, type: e.target.value})}
+                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      <option value="QUANTITATIF">Quantitatif</option>
+                      <option value="QUALITATIF">Qualitatif</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Valeur Cible</label>
                     <input
                       type="number"
                       step="0.01"
-                      required
-                      value={formData.cible}
-                      onChange={(e) => setFormData({...formData, cible: e.target.value})}
+                      value={formData.valeur_cible}
+                      onChange={(e) => setFormData({...formData, valeur_cible: e.target.value})}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
