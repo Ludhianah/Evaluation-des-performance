@@ -44,11 +44,19 @@ async def responsable_or_admin_for_service(service_id: int, current_user: User =
         )
 
 
+# Dependency function for creating objectifs
+async def check_create_objectif_permissions(
+    objectif_data: ObjectifCreate,
+    current_user: User = Depends(get_current_user)
+):
+    return await responsable_or_admin_for_service(objectif_data.service_id, current_user)
+
+
 # 🔐 Créer un objectif
 @router.post("/", response_model=Objectif_Pydantic)
 async def creer_objectif(
     objectif_data: ObjectifCreate,
-    current_user: User = Depends(lambda: responsable_or_admin_for_service(objectif_data.service_id))
+    current_user: User = Depends(check_create_objectif_permissions)
 ):
     try:
         objectif = await Objectif.create(**objectif_data.dict())
