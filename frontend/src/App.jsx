@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './components/ToastProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Register from './pages/Register';
@@ -8,14 +9,18 @@ import Dashboard from './pages/Dashboard';
 import Objectifs from './pages/Objectifs';
 import Indicateurs from './pages/Indicateurs';
 import Evaluations from './pages/Evaluations';
+import Services from './pages/Services';
+import Users from './pages/Users';
+import Reports from './pages/Reports';
 import DashboardLayout from './components/DashboardLayout';
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
-        <div className="App">
-          <Routes>
+    <ToastProvider>
+      <AuthProvider>
+        <Router>
+          <div className="App">
+            <Routes>
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
@@ -49,6 +54,27 @@ function App() {
                 </DashboardLayout>
               </ProtectedRoute>
             } />
+            <Route path="/dashboard/services" element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <DashboardLayout>
+                  <Services />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/users" element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <DashboardLayout>
+                  <Users />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
+            <Route path="/dashboard/reports" element={
+              <ProtectedRoute requiredRole="ADMIN">
+                <DashboardLayout>
+                  <Reports />
+                </DashboardLayout>
+              </ProtectedRoute>
+            } />
             
             {/* Default redirect based on role */}
             <Route path="/" element={
@@ -59,10 +85,11 @@ function App() {
               </ProtectedRoute>
             } />
             <Route path="*" element={<Navigate to="/dashboard" replace />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
 
