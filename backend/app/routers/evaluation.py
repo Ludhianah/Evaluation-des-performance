@@ -22,7 +22,9 @@ async def creer_evaluation(
 
     # Vérifier rôle RESPONSABLE
     if getattr(current_user, "role", None) == RoleEnum.RESPONSABLE.value:
-        if indicateur.objectif.service_id != current_user.service_id:
+        # Charger l'objectif lié à l'indicateur
+        objectif = await indicateur.objectif
+        if objectif.service_id != current_user.service_id:
             raise HTTPException(status_code=403, detail="Vous ne pouvez évaluer que les indicateurs de votre service")
 
     # Calcul automatique note
