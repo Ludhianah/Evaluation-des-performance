@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 
 const Login = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const { login, loading, error } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Get the redirect path from location state or default to dashboard
+  const from = location.state?.from?.pathname || '/dashboard';
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,16 +21,16 @@ const Login = () => {
       // Redirect based on user role
       if (result.user && result.user.role) {
         if (result.user.role === 'ADMIN') {
-          navigate('/dashboard');
+          navigate('/dashboard/objectifs', { replace: true });
         } else if (result.user.role === 'RESPONSABLE') {
-          navigate('/dashboard');
+          navigate('/dashboard/evaluations', { replace: true });
         } else {
           // Default fallback
-          navigate('/dashboard');
+          navigate(from, { replace: true });
         }
       } else {
         // Default fallback if role is not available
-        navigate('/dashboard');
+        navigate(from, { replace: true });
       }
     }
   };
@@ -37,7 +41,11 @@ const Login = () => {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
           <p className="text-gray-600">Sign in to your account</p>
-          <p className="text-sm text-gray-500 mt-2">Test credentials: testuser2 / password123</p>
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-700 font-medium">Test Credentials:</p>
+            <p className="text-sm text-blue-600">Admin: admin / admin123</p>
+            <p className="text-sm text-blue-600">Responsable: user / user123</p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">

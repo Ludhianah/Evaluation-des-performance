@@ -62,14 +62,16 @@ export const AuthProvider = ({ children }) => {
   };
 
   // Register function
-  const register = async (username, password) => {
+  const register = async (username, password, role = 'RESPONSABLE', service_id = null) => {
     setLoading(true);
     setError(null);
     
     try {
       const response = await axios.post(`${API_BASE_URL}/auth/register`, {
         username,
-        password
+        password,
+        role,
+        service_id
       });
       
       return { success: true, user: response.data };
@@ -93,6 +95,21 @@ export const AuthProvider = ({ children }) => {
   // Check if user is authenticated
   const isAuthenticated = () => {
     return !!token && !!user;
+  };
+
+  // Get user role
+  const getUserRole = () => {
+    return user?.role || null;
+  };
+
+  // Check if user is admin
+  const isAdmin = () => {
+    return user?.role === 'ADMIN';
+  };
+
+  // Check if user is responsable
+  const isResponsable = () => {
+    return user?.role === 'RESPONSABLE';
   };
 
   // Verify token on app load
