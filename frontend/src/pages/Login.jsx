@@ -1,108 +1,183 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
+import * as Form from '@radix-ui/react-form';
+import { Button, Card, Text } from '@radix-ui/themes';
 
 const Login = () => {
+
+  // ==============================
+  // États locaux du formulaire
+  // ==============================
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+
+  // Récupération du contexte d'authentification
   const { login, loading, error } = useAuth();
+
+  // Navigation après connexion
   const navigate = useNavigate();
   const location = useLocation();
-
-  // Get the redirect path from location state or default to dashboard
   const from = location.state?.from?.pathname || '/dashboard';
 
+  // ==============================
+  // Fonction appelée lors du submit
+  // ==============================
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
+    // Appel de la fonction login du AuthContext
     const result = await login(username, password);
-    
+
+    // Redirection selon le rôle
     if (result.success) {
-      // Redirect based on user role
-      if (result.user && result.user.role) {
-        if (result.user.role === 'ADMIN') {
-          navigate('/dashboard/objectifs', { replace: true });
-        } else if (result.user.role === 'RESPONSABLE') {
-          navigate('/dashboard/evaluations', { replace: true });
-        } else {
-          // Default fallback
-          navigate(from, { replace: true });
-        }
+      if (result.user?.role === 'ADMIN') {
+        navigate('/dashboard', { replace: true });
+      } else if (result.user?.role === 'RESPONSABLE') {
+        navigate('/dashboard/evaluations', { replace: true });
       } else {
-        // Default fallback if role is not available
         navigate(from, { replace: true });
       }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-400 via-purple-500 to-pink-500 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    // Conteneur principal pleine hauteur avec fond blanc
+    <div className="min-h-screen bg-white flex items-center justify-center px-4">
+
+      {/* Carte centrale Radix */}
+      <Card className="w-full max-w-md shadow-xl rounded-2xl p-8 border border-gray-200">
+
+        {/* ==============================
+            En-tête du formulaire
+        ============================== */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
-          <p className="text-gray-600">Sign in to your account</p>
-          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-sm text-blue-700 font-medium">Test Credentials:</p>
-            <p className="text-sm text-blue-600">Admin: admin / admin123</p>
-            <p className="text-sm text-blue-600">Responsable: user / user123</p>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Connexion
+          </h1>
+          <Text size="2" color="gray">
+            Accédez à votre espace d’évaluation
+          </Text>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        {/* ==============================
+            Formulaire Radix
+        ============================== */}
+        <Form.Root onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Affichage erreur backend */}
           {error && (
-            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+            <div className="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded-lg text-sm">
               {typeof error === 'string' ? error : JSON.stringify(error)}
             </div>
           )}
 
-          <div>
-            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-              Username
-            </label>
-            <input
-              type="text"
-              id="username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-              placeholder="Enter your username"
-              required
-            />
-          </div>
+          {/* ==============================
+              Champ Nom d'utilisateur
+          ============================== */}
+          <Form.Field name="username">
+            <Form.Label className="block text-sm font-medium text-gray-700 mb-2">
+              Nom d'utilisateur
+            </Form.Label>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              Password
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-purple-500 focus:border-purple-500"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
+            <Form.Control asChild>
+              <input
+                type="text"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                className="
+                  w-full px-4 py-2 
+                  border border-gray-300 
+                  rounded-lg 
+                  focus:outline-none 
+                  focus:ring-2 focus:ring-blue-500 
+                  focus:border-blue-500 
+                  transition
+                "
+                placeholder="Entrez votre nom d'utilisateur"
+                required
+              />
+            </Form.Control>
 
-          <button
+            <Form.Message
+              className="text-red-500 text-xs mt-1"
+              match="valueMissing"
+            >
+              Veuillez saisir votre nom d'utilisateur
+            </Form.Message>
+          </Form.Field>
+
+          {/* ==============================
+              Champ Mot de passe
+          ============================== */}
+          <Form.Field name="password">
+            <Form.Label className="block text-sm font-medium text-gray-700 mb-2">
+              Mot de passe
+            </Form.Label>
+
+            <Form.Control asChild>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="
+                  w-full px-4 py-2 
+                  border border-gray-300 
+                  rounded-lg 
+                  focus:outline-none 
+                  focus:ring-2 focus:ring-blue-500 
+                  focus:border-blue-500 
+                  transition
+                "
+                placeholder="Entrez votre mot de passe"
+                required
+              />
+            </Form.Control>
+
+            <Form.Message
+              className="text-red-500 text-xs mt-1"
+              match="valueMissing"
+            >
+              Veuillez saisir votre mot de passe
+            </Form.Message>
+          </Form.Field>
+
+          {/* ==============================
+              Bouton principal
+          ============================== */}
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-purple-600 to-pink-600 text-white py-3 px-4 rounded-md hover:from-purple-700 hover:to-pink-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            className="
+              w-full 
+              bg-blue-600 hover:bg-blue-700 
+              text-white 
+              py-3 
+              rounded-lg 
+              font-medium 
+              transition 
+              disabled:opacity-50
+            "
           >
-            {loading ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
+            {loading ? 'Connexion en cours...' : 'Se connecter'}
+          </Button>
 
-        <div className="mt-6 text-center">
-          <p className="text-gray-600">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-purple-600 hover:text-purple-800 font-medium">
-              Sign up here
-            </Link>
-          </p>
+        </Form.Root>
+
+        {/* ==============================
+            Lien inscription
+        ============================== */}
+        <div className="mt-6 text-center text-sm text-gray-600">
+          Vous n'avez pas de compte ?{' '}
+          <Link
+            to="/register"
+            className="text-blue-600 hover:underline font-medium"
+          >
+            Créer un compte
+          </Link>
         </div>
-      </div>
+
+      </Card>
     </div>
   );
 };
