@@ -4,33 +4,34 @@ import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outli
 
 const Objectifs = () => {
   const [objectifs, setObjectifs] = useState([]);
+  const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingObjectif, setEditingObjectif] = useState(null);
   
   const [formData, setFormData] = useState({
-    nom: '',
-    description: '',
-    date_debut: '',
-    date_fin: '',
-    poids: ''
+    libelle: '',
+    mois: '',
+    annee: '',
+    service_id: ''
   });
 
   const token = localStorage.getItem('token');
 
   useEffect(() => {
     fetchObjectifs();
+    fetchServices();
   }, []);
 
+  // Récupérer tous les objectifs
   const fetchObjectifs = async () => {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:8000/objectifs/', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
+      console.log('Objectifs API:', response.data);
       setObjectifs(response.data);
     } catch (err) {
       setError('Erreur lors du chargement des objectifs');
@@ -40,25 +41,40 @@ const Objectifs = () => {
     }
   };
 
+  // Récupérer tous les services
+  const fetchServices = async () => {
+    try {
+      const res = await axios.get('http://localhost:8000/services/', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setServices(res.data);
+    } catch (err) {
+      console.error('Erreur services:', err);
+    }
+  };
+
+  // Obtenir le nom du service depuis l'ID
+  const getServiceName = (id) => {
+    const service = services.find(s => s.id === id);
+    return service ? service.nom : id;
+  };
+
+  // Création / édition d'un objectif
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       if (editingObjectif) {
         await axios.put(`http://localhost:8000/objectifs/${editingObjectif.id}`, formData, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         await axios.post('http://localhost:8000/objectifs/', formData, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
       }
       setIsModalOpen(false);
       setEditingObjectif(null);
-      setFormData({ nom: '', description: '', date_debut: '', date_fin: '', poids: '' });
+      setFormData({ libelle: '', mois: '', annee: '', service_id: '' });
       fetchObjectifs();
     } catch (err) {
       setError(editingObjectif ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
@@ -70,9 +86,7 @@ const Objectifs = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet objectif ?')) {
       try {
         await axios.delete(`http://localhost:8000/objectifs/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
         fetchObjectifs();
       } catch (err) {
@@ -85,18 +99,17 @@ const Objectifs = () => {
   const handleEdit = (objectif) => {
     setEditingObjectif(objectif);
     setFormData({
-      nom: objectif.nom,
-      description: objectif.description,
-      date_debut: objectif.date_debut,
-      date_fin: objectif.date_fin,
-      poids: objectif.poids
+      libelle: objectif.libelle,
+      mois: objectif.mois,
+      annee: objectif.annee,
+      service_id: objectif.service_id
     });
     setIsModalOpen(true);
   };
 
   const openModal = () => {
     setEditingObjectif(null);
-    setFormData({ nom: '', description: '', date_debut: '', date_fin: '', poids: '' });
+    setFormData({ libelle: '', mois: '', annee: '', service_id: '' });
     setIsModalOpen(true);
   };
 
@@ -114,7 +127,7 @@ const Objectifs = () => {
         <h1 className="text-2xl font-bold text-gray-900">Objectifs</h1>
         <button
           onClick={openModal}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          className="inline-flex items-center px-4 py-2 text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
         >
           <PlusCircleIcon className="h-5 w-5 mr-2" />
           Nouvel Objectif
@@ -132,33 +145,25 @@ const Objectifs = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poids</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Début</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Fin</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Libellé</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mois</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Année</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {objectifs.map((objectif) => (
                 <tr key={objectif.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{objectif.nom}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{objectif.description}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{objectif.poids}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{objectif.date_debut}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{objectif.date_fin}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
-                    <button
-                      onClick={() => handleEdit(objectif)}
-                      className="text-indigo-600 hover:text-indigo-900"
-                    >
+                  <td className="px-6 py-4 text-sm text-gray-900">{objectif.libelle}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{objectif.mois}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{objectif.annee}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{getServiceName(objectif.service_id)}</td>
+                  <td className="px-6 py-4 text-sm font-medium space-x-2">
+                    <button onClick={() => handleEdit(objectif)} className="text-indigo-600 hover:text-indigo-900">
                       <PencilIcon className="h-5 w-5" />
                     </button>
-                    <button
-                      onClick={() => handleDelete(objectif.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
+                    <button onClick={() => handleDelete(objectif.id)} className="text-red-600 hover:text-red-900">
                       <TrashIcon className="h-5 w-5" />
                     </button>
                   </td>
@@ -173,79 +178,59 @@ const Objectifs = () => {
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingObjectif ? 'Modifier Objectif' : 'Nouvel Objectif'}
-              </h3>
-              <form onSubmit={handleSubmit}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Nom</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.nom}
-                      onChange={(e) => setFormData({...formData, nom: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Poids</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      value={formData.poids}
-                      onChange={(e) => setFormData({...formData, poids: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Date Début</label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.date_debut}
-                      onChange={(e) => setFormData({...formData, date_debut: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Date Fin</label>
-                    <input
-                      type="date"
-                      required
-                      value={formData.date_fin}
-                      onChange={(e) => setFormData({...formData, date_fin: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
-                <div className="mt-5 flex justify-end space-x-3">
-                  <button
-                    type="button"
-                    onClick={() => setIsModalOpen(false)}
-                    className="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    {editingObjectif ? 'Mettre à jour' : 'Créer'}
-                  </button>
-                </div>
-              </form>
-            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">
+              {editingObjectif ? 'Modifier Objectif' : 'Nouvel Objectif'}
+            </h3>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Libellé</label>
+                <input
+                  type="text"
+                  required
+                  value={formData.libelle}
+                  onChange={(e) => setFormData({ ...formData, libelle: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Mois</label>
+                <input
+                  type="number"
+                  required
+                  value={formData.mois}
+                  onChange={(e) => setFormData({ ...formData, mois: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Année</label>
+                <input
+                  type="number"
+                  required
+                  value={formData.annee}
+                  onChange={(e) => setFormData({ ...formData, annee: e.target.value })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Service</label>
+                <select
+                  required
+                  value={formData.service_id}
+                  onChange={(e) => setFormData({ ...formData, service_id: parseInt(e.target.value) })}
+                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
+                >
+                  <option value="">-- Choisir un service --</option>
+                  {services.map((s) => (
+                    <option key={s.id} value={s.id}>{s.nom}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="mt-5 flex justify-end space-x-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="px-4 py-2 bg-gray-300 rounded-md">Annuler</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-md">{editingObjectif ? 'Mettre à jour' : 'Créer'}</button>
+              </div>
+            </form>
           </div>
         </div>
       )}
