@@ -4,11 +4,12 @@ import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outli
 
 const Indicateurs = () => {
   const [indicateurs, setIndicateurs] = useState([]);
+  const [objectifs, setObjectifs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingIndicateur, setEditingIndicateur] = useState(null);
-  
+
   const [formData, setFormData] = useState({
     libelle: '',
     description: '',
@@ -17,8 +18,6 @@ const Indicateurs = () => {
     unite: '',
     objectif_id: ''
   });
-
-  const [objectifs, setObjectifs] = useState([]);
 
   const token = localStorage.getItem('token');
 
@@ -31,9 +30,7 @@ const Indicateurs = () => {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:8000/indicateurs/', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       setIndicateurs(response.data);
     } catch (err) {
@@ -47,9 +44,7 @@ const Indicateurs = () => {
   const fetchObjectifs = async () => {
     try {
       const response = await axios.get('http://localhost:8000/objectifs/', {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` }
       });
       setObjectifs(response.data);
     } catch (err) {
@@ -60,7 +55,6 @@ const Indicateurs = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Convert string values to proper types for backend
       const dataToSend = {
         libelle: formData.libelle,
         description: formData.description,
@@ -72,17 +66,14 @@ const Indicateurs = () => {
 
       if (editingIndicateur) {
         await axios.put(`http://localhost:8000/indicateurs/${editingIndicateur.id}`, dataToSend, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
       } else {
         await axios.post('http://localhost:8000/indicateurs/', dataToSend, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
       }
+
       setIsModalOpen(false);
       setEditingIndicateur(null);
       setFormData({ libelle: '', description: '', type: 'QUANTITATIF', valeur_cible: '', unite: '', objectif_id: '' });
@@ -97,9 +88,7 @@ const Indicateurs = () => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer cet indicateur ?')) {
       try {
         await axios.delete(`http://localhost:8000/indicateurs/${id}`, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+          headers: { Authorization: `Bearer ${token}` }
         });
         fetchIndicateurs();
       } catch (err) {
@@ -171,12 +160,12 @@ const Indicateurs = () => {
             <tbody className="bg-white divide-y divide-gray-200">
               {indicateurs.map((indicateur) => (
                 <tr key={indicateur.id}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{indicateur.nom}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{indicateur.libelle}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.description}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {objectifs.find(obj => obj.id === indicateur.objectif_id)?.nom || 'Non spécifié'}
+                    {objectifs.find(obj => obj.id === indicateur.objectif_id)?.libelle || 'Non spécifié'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.cible}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.valeur_cible}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.unite}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
@@ -237,7 +226,7 @@ const Indicateurs = () => {
                     >
                       <option value="">Sélectionner un objectif</option>
                       {objectifs.map((objectif) => (
-                        <option key={objectif.id} value={objectif.id}>{objectif.nom}</option>
+                        <option key={objectif.id} value={objectif.id}>{objectif.libelle}</option>
                       ))}
                     </select>
                   </div>
