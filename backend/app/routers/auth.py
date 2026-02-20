@@ -123,6 +123,92 @@ async def login_json(login_data: LoginRequest):
 
 
 # =========================
+# LISTE DES UTILISATEURS
+# =========================
+@router.get("/", response_model=list[User_Pydantic])
+async def list_users(current_user: User = Depends(get_current_user)):
+    """
+    Liste tous les utilisateurs (ADMIN uniquement).
+    """
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs"
+        )
+    
+    users = await User.all().prefetch_related('service')
+    return await User_Pydantic.from_queryset(users)
+
+# =========================
+# MISE À JOUR D'UTILISATEUR
+# =========================
+@router.put("/{user_id}", response_model=User_Pydantic)
+async def update_user(
+    user_id: int, 
+    user_data: UserCreate, 
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Met à jour un utilisateur (ADMIN uniquement).
+    """
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs"
+        )
+    
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    if user_data.role == "RESPONSABLE" and user_data.service_id is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Un responsable doit appartenir à un service"
+        )
+
+    # Hash password if provided
+    if user_data.password:
+        user.password = pwd_context.hash(user_data.password)
+    
+    user.username = user_data.username
+    user.role = user_data.role
+    user.service_id = user_data.service_id
+    
+    await user.save()
+    return await User_Pydantic.from_tortoise_orm(user)
+
+# =========================
+# SUPPRESSION D'UTILISATEUR
+# =========================
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: int, 
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Supprime un utilisateur (ADMIN uniquement).
+    """
+    if current_user.role != "ADMIN":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Accès réservé aux administrateurs"
+        )
+    
+    user = await User.get_or_none(id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Utilisateur non trouvé"
+        )
+    
+    await user.delete()
+    return
+
+# =========================
 # UTILISATEUR COURANT
 # =========================
 @router.get("/me", response_model=User_Pydantic)

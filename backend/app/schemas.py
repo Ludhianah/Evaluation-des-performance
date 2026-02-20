@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel, Field
 from enum import Enum
+from datetime import date
 
 # -----------------------------
 # Enum rôle pour validation
@@ -30,9 +31,9 @@ class ServiceCreate(BaseModel):
 # -----------------------------
 class ObjectifCreate(BaseModel):
     libelle: str
-    mois: int
-    annee: int
+    date: date
     service_id: int
+
 
 # -----------------------------
 # Création Indicateur

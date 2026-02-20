@@ -55,8 +55,8 @@ class User(Model):
 class Objectif(Model):
     id = fields.IntField(pk=True)
     libelle = fields.CharField(max_length=255)
-    mois = fields.IntField()
-    annee = fields.IntField()
+    date = fields.DateField()
+
 
     service: fields.ForeignKeyRelation[Service] = fields.ForeignKeyField(
         "models.Service", related_name="objectifs"

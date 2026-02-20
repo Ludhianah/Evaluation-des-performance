@@ -21,6 +21,8 @@ services:
       POSTGRES_DB: evaluation_db
     ports:
       - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d evaluation_db"]
       interval: 2s

@@ -12,8 +12,7 @@ const Objectifs = () => {
   
   const [formData, setFormData] = useState({
     libelle: '',
-    mois: '',
-    annee: '',
+    date: '',       // Remplace mois et année
     service_id: ''
   });
 
@@ -24,14 +23,12 @@ const Objectifs = () => {
     fetchServices();
   }, []);
 
-  // Récupérer tous les objectifs
   const fetchObjectifs = async () => {
     try {
       setLoading(true);
       const response = await axios.get('http://localhost:8000/objectifs/', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      console.log('Objectifs API:', response.data);
       setObjectifs(response.data);
     } catch (err) {
       setError('Erreur lors du chargement des objectifs');
@@ -41,7 +38,6 @@ const Objectifs = () => {
     }
   };
 
-  // Récupérer tous les services
   const fetchServices = async () => {
     try {
       const res = await axios.get('http://localhost:8000/services/', {
@@ -53,13 +49,11 @@ const Objectifs = () => {
     }
   };
 
-  // Obtenir le nom du service depuis l'ID
   const getServiceName = (id) => {
     const service = services.find(s => s.id === id);
     return service ? service.nom : id;
   };
 
-  // Création / édition d'un objectif
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -74,7 +68,7 @@ const Objectifs = () => {
       }
       setIsModalOpen(false);
       setEditingObjectif(null);
-      setFormData({ libelle: '', mois: '', annee: '', service_id: '' });
+      setFormData({ libelle: '', date: '', service_id: '' });
       fetchObjectifs();
     } catch (err) {
       setError(editingObjectif ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
@@ -100,8 +94,7 @@ const Objectifs = () => {
     setEditingObjectif(objectif);
     setFormData({
       libelle: objectif.libelle,
-      mois: objectif.mois,
-      annee: objectif.annee,
+      date: objectif.date,  // Récupère la date complète
       service_id: objectif.service_id
     });
     setIsModalOpen(true);
@@ -109,7 +102,7 @@ const Objectifs = () => {
 
   const openModal = () => {
     setEditingObjectif(null);
-    setFormData({ libelle: '', mois: '', annee: '', service_id: '' });
+    setFormData({ libelle: '', date: '', service_id: '' });
     setIsModalOpen(true);
   };
 
@@ -146,8 +139,7 @@ const Objectifs = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Libellé</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mois</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Année</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Service</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
@@ -156,8 +148,7 @@ const Objectifs = () => {
               {objectifs.map((objectif) => (
                 <tr key={objectif.id}>
                   <td className="px-6 py-4 text-sm text-gray-900">{objectif.libelle}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{objectif.mois}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{objectif.annee}</td>
+                  <td className="px-6 py-4 text-sm text-gray-500">{objectif.date}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{getServiceName(objectif.service_id)}</td>
                   <td className="px-6 py-4 text-sm font-medium space-x-2">
                     <button onClick={() => handleEdit(objectif)} className="text-indigo-600 hover:text-indigo-900">
@@ -193,22 +184,12 @@ const Objectifs = () => {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Mois</label>
+                <label className="block text-sm font-medium text-gray-700">Date</label>
                 <input
-                  type="number"
+                  type="date"
                   required
-                  value={formData.mois}
-                  onChange={(e) => setFormData({ ...formData, mois: e.target.value })}
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Année</label>
-                <input
-                  type="number"
-                  required
-                  value={formData.annee}
-                  onChange={(e) => setFormData({ ...formData, annee: e.target.value })}
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
                 />
               </div>
