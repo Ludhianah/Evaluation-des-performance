@@ -32,6 +32,9 @@ const Indicateurs = () => {
       const response = await axios.get('http://localhost:8000/indicateurs/', {
         headers: { Authorization: `Bearer ${token}` }
       });
+
+      console.log('Indicateurs récupérés:', response.data);
+
       setIndicateurs(response.data);
     } catch (err) {
       setError('Erreur lors du chargement des indicateurs');
@@ -163,7 +166,9 @@ const Indicateurs = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{indicateur.libelle}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.description}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {objectifs.find(obj => obj.id === indicateur.objectif_id)?.libelle || 'Non spécifié'}
+                    {indicateur.objectif}
+                    {/* {objectifs.find(obj => obj.id === indicateur.objectif_id)?.libelle || 'Non spécifié'} */}
+
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.valeur_cible}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.unite}</td>
