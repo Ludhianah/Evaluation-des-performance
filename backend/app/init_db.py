@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 from tortoise import Tortoise
-from models import Service, User, RoleEnum
+from models import Service, User, RoleEnum, Evaluation
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -20,6 +20,20 @@ async def init():
     # Crée les tables si elles n'existent pas
     await Tortoise.generate_schemas()
     print("Tables créées avec succès !")
+    
+    # Vérifie et ajoute la colonne total_score si elle n'existe pas
+    try:
+        # Essaye de sélectionner la colonne total_score
+        await Evaluation.raw("SELECT total_score FROM evaluations LIMIT 1")
+        print("La colonne total_score existe déjà dans la table evaluations.")
+    except Exception as e:
+        if "column \"total_score\" does not exist" in str(e):
+            print("Ajout de la colonne total_score à la table evaluations...")
+            # Ajoute la colonne total_score
+            await Evaluation.raw("ALTER TABLE evaluations ADD COLUMN total_score DOUBLE PRECISION")
+            print("Colonne total_score ajoutée avec succès !")
+        else:
+            print(f"Erreur lors de la vérification de la colonne total_score: {e}")
     
     # Crée des services par défaut si la table est vide
     service_count = await Service.all().count()

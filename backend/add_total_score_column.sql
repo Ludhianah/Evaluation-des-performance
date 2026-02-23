@@ -1,0 +1,1 @@
+ALTER TABLE evaluations ADD COLUMN total_score DOUBLE PRECISION;

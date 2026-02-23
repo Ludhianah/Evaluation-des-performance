@@ -1,9 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from tortoise.exceptions import IntegrityError
 from typing import List
-import jwt
 
-from ..models import Objectif, Objectif_Pydantic, ObjectifIn_Pydantic, Service, User
+from ..models import Objectif, Objectif_Pydantic, ObjectifIn_Pydantic, Service, User, RoleEnum
 from ..schemas import ObjectifCreate
 from ..routers.auth import get_current_user
 
@@ -13,7 +12,7 @@ router = APIRouter(prefix="/objectifs", tags=["Objectifs"])
 # Vérification rôle ADMIN
 # -----------------------------
 async def admin_required(current_user: User = Depends(get_current_user)):
-    if current_user.role != "ADMIN":
+    if current_user.role != RoleEnum.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Action réservée aux administrateurs"
@@ -24,14 +23,14 @@ async def admin_required(current_user: User = Depends(get_current_user)):
 # Vérification rôle RESPONSABLE ou ADMIN pour son service
 # -----------------------------
 async def responsable_or_admin_for_service(service_id: int, current_user: User = Depends(get_current_user)):
-    if current_user.role == "ADMIN":
+    if current_user.role == RoleEnum.ADMIN.value:
         return current_user
-    elif current_user.role == "RESPONSABLE":
-        # Vérifier si le service appartient au responsable
-        service = await Service.get_or_none(id=service_id)
-        if not service:
-            raise HTTPException(status_code=404, detail="Service non trouvé")
-        if service.id != current_user.service_id:
+    elif current_user.role == RoleEnum.RESPONSABLE.value:
+        # Récupérer le service lié à l'utilisateur
+        user_service = await current_user.service.first()
+        if not user_service:
+            raise HTTPException(status_code=403, detail="Vous n'avez pas de service assigné")
+        if user_service.id != service_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Vous ne pouvez gérer que les objectifs de votre service"
@@ -43,14 +42,14 @@ async def responsable_or_admin_for_service(service_id: int, current_user: User =
             detail="Rôle non autorisé"
         )
 
-
-# Dependency function for creating objectifs
+# -----------------------------
+# Permission pour créer un objectif
+# -----------------------------
 async def check_create_objectif_permissions(
     objectif_data: ObjectifCreate,
     current_user: User = Depends(get_current_user)
 ):
     return await responsable_or_admin_for_service(objectif_data.service_id, current_user)
-
 
 # 🔐 Créer un objectif
 @router.post("/", response_model=Objectif_Pydantic)
@@ -67,21 +66,31 @@ async def creer_objectif(
             detail="Un objectif avec ce libellé existe déjà pour ce service et cette période"
         )
 
-
-# 📋 Lister tous les objectifs (TOUS les utilisateurs)
+# 📋 Lister tous les objectifs
 @router.get("/", response_model=List[Objectif_Pydantic])
-async def lister_objectifs():
+async def lister_objectifs(current_user: User = Depends(get_current_user)):
+    if current_user.role == RoleEnum.RESPONSABLE.value:
+        user_service = await current_user.service.first()
+        if not user_service:
+            return []
+        return await Objectif_Pydantic.from_queryset(
+            Objectif.filter(service_id=user_service.id)
+        )
     return await Objectif_Pydantic.from_queryset(Objectif.all())
 
-
-# 🔍 Obtenir un objectif par ID (TOUS les utilisateurs)
+# 🔍 Obtenir un objectif par ID
 @router.get("/{objectif_id}", response_model=Objectif_Pydantic)
-async def obtenir_objectif(objectif_id: int):
-    objectif = await Objectif.get_or_none(id=objectif_id)
+async def obtenir_objectif(objectif_id: int, current_user: User = Depends(get_current_user)):
+    objectif = await Objectif.get_or_none(id=objectif_id).select_related("service")
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
-    return await Objectif_Pydantic.from_tortoise_orm(objectif)
 
+    if current_user.role == RoleEnum.RESPONSABLE.value:
+        user_service = await current_user.service.first()
+        if not user_service or user_service.id != objectif.service.id:
+            raise HTTPException(status_code=403, detail="Accès refusé à cet objectif")
+
+    return await Objectif_Pydantic.from_tortoise_orm(objectif)
 
 # ✏️ Mettre à jour un objectif
 @router.put("/{objectif_id}", response_model=Objectif_Pydantic)
@@ -90,14 +99,14 @@ async def mettre_a_jour_objectif(
     objectif_data: ObjectifIn_Pydantic,
     current_user: User = Depends(get_current_user)
 ):
-    objectif = await Objectif.get_or_none(id=objectif_id)
+    objectif = await Objectif.get_or_none(id=objectif_id).select_related("service")
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
 
     # Vérification droits
-    await responsable_or_admin_for_service(objectif.service_id, current_user)
+    await responsable_or_admin_for_service(objectif.service.id, current_user)
 
-    # Vérifier si le service change
+    # Si le service change, vérifier aussi
     if hasattr(objectif_data, "service_id") and objectif_data.service_id:
         await responsable_or_admin_for_service(objectif_data.service_id, current_user)
 
@@ -105,19 +114,18 @@ async def mettre_a_jour_objectif(
     await objectif.save()
     return await Objectif_Pydantic.from_tortoise_orm(objectif)
 
-
 # 🗑 Supprimer un objectif
 @router.delete("/{objectif_id}")
 async def supprimer_objectif(
     objectif_id: int,
     current_user: User = Depends(get_current_user)
 ):
-    objectif = await Objectif.get_or_none(id=objectif_id)
+    objectif = await Objectif.get_or_none(id=objectif_id).select_related("service")
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
 
     # Vérification droits
-    await responsable_or_admin_for_service(objectif.service_id, current_user)
+    await responsable_or_admin_for_service(objectif.service.id, current_user)
 
     await objectif.delete()
     return {"message": "Objectif supprimé avec succès"}

@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException, Depends, status
 from tortoise.exceptions import IntegrityError
-from typing import List, Optional
+from typing import List
 
-from ..models import Service, Service_Pydantic, ServiceIn_Pydantic, User
+from ..models import Service, Service_Pydantic, ServiceIn_Pydantic, User, RoleEnum
 from ..schemas import ServiceCreate
 from ..routers.auth import get_current_user
 
@@ -10,10 +10,10 @@ router = APIRouter(prefix="/services", tags=["Services"])
 
 
 # -----------------------------
-# Vérification du rôle ADMIN
+# Vérification rôle ADMIN
 # -----------------------------
 async def admin_required(current_user: User = Depends(get_current_user)):
-    if current_user.role != "ADMIN":
+    if current_user.role != RoleEnum.ADMIN.value:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Action réservée aux administrateurs"
@@ -52,7 +52,7 @@ async def lister_services():
 # 🔍 Obtenir un service par ID (TOUS les utilisateurs)
 @router.get("/{service_id}", response_model=Service_Pydantic)
 async def obtenir_service(service_id: int):
-    service = await Service.get_or_none(id=service_id)
+    service = await Service.get_or_none(id=service_id).prefetch_related("utilisateurs", "objectifs")
     if not service:
         raise HTTPException(status_code=404, detail="Service non trouvé")
     return await Service_Pydantic.from_tortoise_orm(service)
@@ -88,7 +88,7 @@ async def supprimer_service(
     service_id: int,
     current_user: User = Depends(admin_required)
 ):
-    service = await Service.get_or_none(id=service_id)
+    service = await Service.get_or_none(id=service_id).prefetch_related("utilisateurs", "objectifs")
     if not service:
         raise HTTPException(status_code=404, detail="Service non trouvé")
 
