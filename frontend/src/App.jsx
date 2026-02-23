@@ -21,70 +21,71 @@ function App() {
         <Router>
           <div className="App">
             <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            
-            {/* Protected routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <Dashboard />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/objectifs" element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <DashboardLayout>
-                  <Objectifs />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/indicateurs" element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <DashboardLayout>
-                  <Indicateurs />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/evaluations" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <Evaluations />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/services" element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <DashboardLayout>
-                  <Services />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/users" element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <DashboardLayout>
-                  <Users />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="/dashboard/reports" element={
-              <ProtectedRoute requiredRole="ADMIN">
-                <DashboardLayout>
-                  <Reports />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            
-            {/* Default redirect based on role */}
-            <Route path="/" element={
-              <ProtectedRoute>
-                <DashboardLayout>
-                  <Dashboard />
-                </DashboardLayout>
-              </ProtectedRoute>
-            } />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              {/* Public routes */}
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+
+              {/* Protected routes */}
+              <Route path="/dashboard" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Dashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/objectifs" element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
+                  <DashboardLayout>
+                    <Objectifs />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/dashboard/indicateurs" element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
+                  <DashboardLayout>
+                    <Indicateurs />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/evaluations" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Evaluations />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/services" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <DashboardLayout>
+                    <Services />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/users" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <DashboardLayout>
+                    <Users />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/reports" element={
+                <ProtectedRoute requiredRole="ADMIN">
+                  <DashboardLayout>
+                    <Reports />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              {/* Default redirect based on role */}
+              <Route path="/" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Dashboard />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
         </Router>
