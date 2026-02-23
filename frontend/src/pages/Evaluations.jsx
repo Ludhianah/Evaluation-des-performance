@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import {
   PlusCircleIcon,
-  UserGroupIcon,
-  ScaleIcon,
   BuildingOffice2Icon,
   UsersIcon,
   ChartBarIcon,
@@ -11,6 +9,7 @@ import {
   DocumentChartBarIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Evaluations = () => {
   const [loading, setLoading] = useState(false);
@@ -31,6 +30,7 @@ const Evaluations = () => {
 
   const token = localStorage.getItem('token');
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   useEffect(() => {
     fetchEmployees();
@@ -140,14 +140,17 @@ const Evaluations = () => {
   const quantitatifs = evaluationResults.filter(r => r.indicateur?.type === "QUANTITATIF");
   const qualitatifs = evaluationResults.filter(r => r.indicateur?.type === "QUALITATIF");
 
-  // 🔹 Boutons navigation internes
-  const navButtons = [
-    { name: 'Services', icon: BuildingOffice2Icon, path: '/dashboard/services' },
-    { name: 'Utilisateurs', icon: UsersIcon, path: '/dashboard/users' },
-    { name: 'Objectifs', icon: ChartBarIcon, path: '/dashboard/objectifs' },
-    { name: 'Indicateurs', icon: Cog6ToothIcon, path: '/dashboard/indicateurs' },
-    { name: 'Rapports', icon: DocumentChartBarIcon, path: '/dashboard/reports' },
+  // 🔹 Tous les boutons avec rôles autorisés
+  const allNavButtons = [
+    { name: 'Services', icon: BuildingOffice2Icon, path: '/dashboard/services', roles: ['ADMIN'] },
+    { name: 'Utilisateurs', icon: UsersIcon, path: '/dashboard/users', roles: ['ADMIN'] },
+    { name: 'Objectifs', icon: ChartBarIcon, path: '/dashboard/objectifs', roles: ['ADMIN', 'RESPONSABLE'] },
+    { name: 'Indicateurs', icon: Cog6ToothIcon, path: '/dashboard/indicateurs', roles: ['ADMIN', 'RESPONSABLE'] },
+    { name: 'Rapports', icon: DocumentChartBarIcon, path: '/dashboard/reports', roles: ['ADMIN'] },
   ];
+
+  // 🔹 Filtrer selon le rôle de l’utilisateur
+  const navButtons = allNavButtons.filter(btn => btn.roles.includes(user?.role));
 
   return (
     <div className="space-y-8">
