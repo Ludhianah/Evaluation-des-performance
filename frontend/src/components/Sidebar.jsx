@@ -1,37 +1,36 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   BuildingOffice2Icon,
-  UsersIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
   DocumentTextIcon,
-  DocumentChartBarIcon,
   Bars3Icon,
   XMarkIcon,
+  ArrowRightOnRectangleIcon // Icon pour déconnexion
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
 const Sidebar = ({ isOpen, setIsOpen }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
 
   const adminNavigation = [
     { name: 'Accueil', href: '/dashboard', icon: BuildingOffice2Icon },
-    { name: 'Services', href: '/dashboard/services', icon: BuildingOffice2Icon },
-    { name: 'Utilisateurs', href: '/dashboard/users', icon: UsersIcon },
-    { name: 'Objectifs', href: '/dashboard/objectifs', icon: ChartBarIcon },
-    { name: 'Indicateurs', href: '/dashboard/indicateurs', icon: Cog6ToothIcon },
     { name: 'Évaluations', href: '/dashboard/evaluations', icon: DocumentTextIcon },
-    { name: 'Rapports', href: '/dashboard/reports', icon: DocumentChartBarIcon },
   ];
 
   const navigation = adminNavigation;
 
+  // 🔹 Fonction de déconnexion
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/login');
+  };
+
   return (
     <>
-      {/* Bouton pour mobile */}
+      {/* Bouton mobile */}
       <button
         className="md:hidden fixed top-4 left-4 z-40 p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-md"
         onClick={() => setIsOpen(!isOpen)}
@@ -49,7 +48,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
-        {/* En-tête de la sidebar */}
+        {/* Header */}
         <div className="flex items-center justify-center h-16 border-b border-gray-200 bg-white/50">
           <div className="text-center">
             <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
@@ -72,8 +71,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               }`}
             >
               <item.icon
-                className={`mr-3 h-5 w-5 transition-colors duration-200 ${
-                  location.pathname === item.href ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                className={`mr-3 h-5 w-5 ${
+                  location.pathname === item.href
+                    ? 'text-blue-600'
+                    : 'text-gray-400 group-hover:text-gray-500'
                 }`}
               />
               <span className="flex-1">{item.name}</span>
@@ -84,8 +85,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
           ))}
         </nav>
 
-        {/* Pied de sidebar */}
-        <div className="p-4 border-t border-gray-200 bg-white/50">
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 bg-white/50 space-y-2">
           <div className="text-xs text-gray-500 font-medium mb-2">Statut</div>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
@@ -100,6 +101,15 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               {user?.role}
             </span>
           </div>
+
+          {/* 🔹 Bouton Déconnexion */}
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full justify-center mt-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded hover:bg-red-200"
+          >
+            <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
+            Déconnexion
+          </button>
         </div>
       </div>
     </>
