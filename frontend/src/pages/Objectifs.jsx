@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../context/AuthContext';
 
 const Objectifs = () => {
+  const { user } = useAuth();
   const [objectifs, setObjectifs] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -18,41 +20,52 @@ const Objectifs = () => {
 
   const token = localStorage.getItem('token');
 
+  // 🔹 Charger les services au montage
   useEffect(() => {
-    fetchObjectifs();
+    const fetchServices = async () => {
+      try {
+        const res = await axios.get('http://localhost:8000/services/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setServices(res.data);
+      } catch (err) {
+        console.error('Erreur services:', err);
+      }
+    };
     fetchServices();
-  }, []);
+  }, [token]);
 
-  const fetchObjectifs = async () => {
-    try {
-      setLoading(true);
-      const response = await axios.get('http://localhost:8000/objectifs/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setObjectifs(response.data);
-    } catch (err) {
-      setError('Erreur lors du chargement des objectifs');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  // 🔹 Charger les objectifs après que les services soient disponibles
+  useEffect(() => {
+    if (services.length === 0) return;
 
-  const fetchServices = async () => {
-    try {
-      const res = await axios.get('http://localhost:8000/services/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setServices(res.data);
-    } catch (err) {
-      console.error('Erreur services:', err);
-    }
-  };
+    const fetchObjectifs = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('http://localhost:8000/objectifs/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setObjectifs(response.data);
+      } catch (err) {
+        setError('Erreur lors du chargement des objectifs');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchObjectifs();
+  }, [services, token]);
 
+  // 🔹 Récupérer le nom du service
   const getServiceName = (id) => {
-    const service = services.find(s => s.id === id);
-    return service ? service.nom : id;
+    const service = services.find(s => s.id === Number(id));
+    return service ? service.nom : 'Non défini';
   };
+
+  // 🔹 Filtrer les objectifs selon le rôle
+  const filteredObjectifs = objectifs.filter(o => 
+    user.role === 'RESPONSABLE' ? o.service_id === user.service_id : true
+  );
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -69,7 +82,11 @@ const Objectifs = () => {
       setIsModalOpen(false);
       setEditingObjectif(null);
       setFormData({ libelle: '', date: '', service_id: '' });
-      fetchObjectifs();
+      // Recharger les objectifs
+      const response = await axios.get('http://localhost:8000/objectifs/', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setObjectifs(response.data);
     } catch (err) {
       setError(editingObjectif ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
       console.error(err);
@@ -82,7 +99,7 @@ const Objectifs = () => {
         await axios.delete(`http://localhost:8000/objectifs/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
-        fetchObjectifs();
+        setObjectifs(prev => prev.filter(o => o.id !== id));
       } catch (err) {
         setError('Erreur lors de la suppression');
         console.error(err);
@@ -94,7 +111,7 @@ const Objectifs = () => {
     setEditingObjectif(objectif);
     setFormData({
       libelle: objectif.libelle,
-      date: objectif.date,  // Récupère la date complète
+      date: objectif.date,
       service_id: objectif.service_id
     });
     setIsModalOpen(true);
@@ -116,6 +133,7 @@ const Objectifs = () => {
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">Objectifs</h1>
         <button
@@ -133,6 +151,7 @@ const Objectifs = () => {
         </div>
       )}
 
+      {/* Tableau */}
       <div className="bg-white shadow rounded-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -145,7 +164,7 @@ const Objectifs = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {objectifs.map((objectif) => (
+              {filteredObjectifs.map((objectif) => (
                 <tr key={objectif.id}>
                   <td className="px-6 py-4 text-sm text-gray-900">{objectif.libelle}</td>
                   <td className="px-6 py-4 text-sm text-gray-500">{objectif.date}</td>
@@ -198,7 +217,7 @@ const Objectifs = () => {
                 <select
                   required
                   value={formData.service_id}
-                  onChange={(e) => setFormData({ ...formData, service_id: parseInt(e.target.value) })}
+                  onChange={(e) => setFormData({ ...formData, service_id: Number(e.target.value) })}
                   className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3"
                 >
                   <option value="">-- Choisir un service --</option>
