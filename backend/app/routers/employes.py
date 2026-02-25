@@ -1,10 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from typing import List
 
-from ..models import Employe, Employe_Pydantic, EmployeIn_Pydantic, User
-from ..schemas import RoleEnum
+from ..models import Employe, Employe_Pydantic, EmployeIn_Pydantic, User, RoleEnum
 from ..routers.auth import get_current_user
-
 
 router = APIRouter(prefix="/employes", tags=["Employes"])
 
@@ -17,7 +15,7 @@ async def creer_employe(
     employe_data: EmployeIn_Pydantic,
     current_user: User = Depends(get_current_user)
 ):
-    if current_user.role != RoleEnum.RESPONSABLE.value:
+    if current_user.role != RoleEnum.RESPONSABLE:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Seul un responsable peut créer un employé"
@@ -29,6 +27,12 @@ async def creer_employe(
         raise HTTPException(
             status_code=400,
             detail="Matricule déjà utilisé"
+        )
+
+    if not current_user.service_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Votre compte n'est pas associé à un service"
         )
 
     employe = await Employe.create(
@@ -47,10 +51,13 @@ async def creer_employe(
 @router.get("/", response_model=List[Employe_Pydantic])
 async def lister_employes(current_user: User = Depends(get_current_user)):
 
-    if current_user.role == RoleEnum.ADMIN.value:
+    if current_user.role == RoleEnum.ADMIN:
         return await Employe_Pydantic.from_queryset(Employe.all())
 
-    if current_user.role == RoleEnum.RESPONSABLE.value:
+    if current_user.role == RoleEnum.RESPONSABLE:
+        if not current_user.service_id:
+            raise HTTPException(status_code=400, detail="Votre compte n'est pas associé à un service")
+
         return await Employe_Pydantic.from_queryset(
             Employe.filter(service_id=current_user.service_id)
         )
@@ -71,7 +78,9 @@ async def obtenir_employe(
     if not employe:
         raise HTTPException(status_code=404, detail="Employé non trouvé")
 
-    if current_user.role == RoleEnum.RESPONSABLE.value:
+    if current_user.role == RoleEnum.RESPONSABLE:
+        if not current_user.service_id:
+            raise HTTPException(status_code=400, detail="Votre compte n'est pas associé à un service")
         if employe.service_id != current_user.service_id:
             raise HTTPException(status_code=403, detail="Accès refusé")
 
@@ -92,9 +101,11 @@ async def modifier_employe(
     if not employe:
         raise HTTPException(status_code=404, detail="Employé non trouvé")
 
-    if current_user.role != RoleEnum.RESPONSABLE.value:
+    if current_user.role != RoleEnum.RESPONSABLE:
         raise HTTPException(status_code=403, detail="Seul un responsable peut modifier")
 
+    if not current_user.service_id:
+        raise HTTPException(status_code=400, detail="Votre compte n'est pas associé à un service")
     if employe.service_id != current_user.service_id:
         raise HTTPException(status_code=403, detail="Accès refusé")
 
@@ -117,9 +128,11 @@ async def supprimer_employe(
     if not employe:
         raise HTTPException(status_code=404, detail="Employé non trouvé")
 
-    if current_user.role != RoleEnum.RESPONSABLE.value:
+    if current_user.role != RoleEnum.RESPONSABLE:
         raise HTTPException(status_code=403, detail="Seul un responsable peut supprimer")
 
+    if not current_user.service_id:
+        raise HTTPException(status_code=400, detail="Votre compte n'est pas associé à un service")
     if employe.service_id != current_user.service_id:
         raise HTTPException(status_code=403, detail="Accès refusé")
 
