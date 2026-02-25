@@ -53,7 +53,7 @@ async def creer_evaluation(
         raise HTTPException(status_code=404, detail="Indicateur non trouvé")
 
     # 🔹 Vérification service pour RESPONSABLE
-    if current_user.role == RoleEnum.RESPONSABLE.value:
+    if current_user.role == RoleEnum.RESPONSABLE:
         if employe.service_id != current_user.service_id:
             raise HTTPException(status_code=403, detail="Interdit pour ce service")
 
@@ -105,7 +105,7 @@ async def lister_evaluations(current_user: User = Depends(get_current_user)):
         "details__indicateur__objectif__service"
     )
 
-    if current_user.role == RoleEnum.RESPONSABLE.value:
+    if current_user.role == RoleEnum.RESPONSABLE:
         query = query.filter(employe__service_id=current_user.service_id)
 
     evaluations = await query
@@ -161,7 +161,7 @@ async def obtenir_evaluation(
     if not evaluation:
         raise HTTPException(status_code=404, detail="Évaluation non trouvée")
 
-    if current_user.role == RoleEnum.RESPONSABLE.value:
+    if current_user.role == RoleEnum.RESPONSABLE:
         if evaluation.employe.service_id != current_user.service_id:
             raise HTTPException(status_code=403, detail="Accès refusé")
 
@@ -182,7 +182,7 @@ async def supprimer_evaluation(
     if not evaluation:
         raise HTTPException(status_code=404, detail="Évaluation non trouvée")
 
-    if current_user.role == RoleEnum.RESPONSABLE.value:
+    if current_user.role == RoleEnum.RESPONSABLE:
         if evaluation.employe.service_id != current_user.service_id:
             raise HTTPException(status_code=403, detail="Interdit pour ce service")
 
