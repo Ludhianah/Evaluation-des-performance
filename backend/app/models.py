@@ -21,13 +21,14 @@ class Service(Model):
 
     utilisateurs: fields.ReverseRelation["User"]
     objectifs: fields.ReverseRelation["Objectif"]
+    employes: fields.ReverseRelation["Employe"]
 
     class Meta:
         table = "services"
 
 
 # =====================================================
-# TABLE USER (Admin / Responsable / Employé)
+# TABLE USER (Admin / Responsable)
 # =====================================================
 class User(Model):
     id = fields.IntField(pk=True)
@@ -42,14 +43,33 @@ class User(Model):
         null=True
     )
 
-    # Evaluations reçues en tant qu'employé
-    evaluations_employe: fields.ReverseRelation["Evaluation"]
-
     # Evaluations faites en tant que responsable
     evaluations_responsable: fields.ReverseRelation["Evaluation"]
 
     class Meta:
         table = "users"
+
+
+# =====================================================
+# TABLE EMPLOYE (N'UTILISE PAS L'APP)
+# =====================================================
+class Employe(Model):
+    id = fields.IntField(pk=True)
+
+    matricule = fields.CharField(max_length=50, unique=True)
+    nom = fields.CharField(max_length=255)
+    poste = fields.CharField(max_length=255, null=True)
+
+    service: fields.ForeignKeyRelation[Service] = fields.ForeignKeyField(
+        "models.Service",
+        related_name="employes",
+        on_delete=fields.CASCADE
+    )
+
+    evaluations: fields.ReverseRelation["Evaluation"]
+
+    class Meta:
+        table = "employes"
 
 
 # =====================================================
@@ -62,7 +82,8 @@ class Objectif(Model):
 
     service: fields.ForeignKeyRelation[Service] = fields.ForeignKeyField(
         "models.Service",
-        related_name="objectifs"
+        related_name="objectifs",
+        on_delete=fields.CASCADE
     )
 
     indicateurs: fields.ReverseRelation["Indicateur"]
@@ -91,7 +112,8 @@ class Indicateur(Model):
 
     objectif: fields.ForeignKeyRelation[Objectif] = fields.ForeignKeyField(
         "models.Objectif",
-        related_name="indicateurs"
+        related_name="indicateurs",
+        on_delete=fields.CASCADE
     )
 
     details: fields.ReverseRelation["EvaluationDetail"]
@@ -106,20 +128,22 @@ class Indicateur(Model):
 class Evaluation(Model):
     id = fields.IntField(pk=True)
 
-    employe: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
-        "models.User",
-        related_name="evaluations_employe"
+    employe: fields.ForeignKeyRelation[Employe] = fields.ForeignKeyField(
+        "models.Employe",
+        related_name="evaluations",
+        on_delete=fields.CASCADE
     )
 
     responsable: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
         "models.User",
-        related_name="evaluations_responsable"
+        related_name="evaluations_responsable",
+        on_delete=fields.CASCADE
     )
 
     mois = fields.IntField()
     annee = fields.IntField()
 
-    # 🔥 TOTAL / MOYENNE GLOBALE
+    # TOTAL / MOYENNE GLOBALE
     total_score = fields.FloatField(null=True)
 
     details: fields.ReverseRelation["EvaluationDetail"]
@@ -137,11 +161,13 @@ class EvaluationDetail(Model):
 
     evaluation: fields.ForeignKeyRelation[Evaluation] = fields.ForeignKeyField(
         "models.Evaluation",
-        related_name="details"
+        related_name="details",
+        on_delete=fields.CASCADE
     )
 
     indicateur: fields.ForeignKeyRelation[Indicateur] = fields.ForeignKeyField(
-        "models.Indicateur"
+        "models.Indicateur",
+        on_delete=fields.CASCADE
     )
 
     realisation = fields.FloatField(null=True)
@@ -160,6 +186,13 @@ ServiceIn_Pydantic = pydantic_model_creator(Service, name="ServiceIn", exclude_r
 User_Pydantic = pydantic_model_creator(User, name="User")
 UserIn_Pydantic = pydantic_model_creator(User, name="UserIn", exclude_readonly=True)
 
+Employe_Pydantic = pydantic_model_creator(Employe, name="Employe")
+EmployeIn_Pydantic = pydantic_model_creator(
+    Employe,
+    name="EmployeIn",
+    exclude_readonly=True
+)
+
 Objectif_Pydantic = pydantic_model_creator(Objectif, name="Objectif")
 ObjectifIn_Pydantic = pydantic_model_creator(Objectif, name="ObjectifIn", exclude_readonly=True)
 
@@ -170,4 +203,8 @@ Evaluation_Pydantic = pydantic_model_creator(Evaluation, name="Evaluation")
 EvaluationIn_Pydantic = pydantic_model_creator(Evaluation, name="EvaluationIn", exclude_readonly=True)
 
 EvaluationDetail_Pydantic = pydantic_model_creator(EvaluationDetail, name="EvaluationDetail")
-EvaluationDetailIn_Pydantic = pydantic_model_creator(EvaluationDetail, name="EvaluationDetailIn", exclude_readonly=True)
+EvaluationDetailIn_Pydantic = pydantic_model_creator(
+    EvaluationDetail,
+    name="EvaluationDetailIn",
+    exclude_readonly=True
+)

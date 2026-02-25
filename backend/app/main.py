@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from tortoise.contrib.fastapi import register_tortoise
 
 # Import des routeurs
-from .routers import auth, services, indicateurs, objectifs, evaluation
+from .routers import auth, services, indicateurs, objectifs, evaluation, employes
 
 app = FastAPI(
     title="API Évaluation Mensuelle",
@@ -36,6 +36,7 @@ app.include_router(services.router)
 app.include_router(indicateurs.router)
 app.include_router(objectifs.router)
 app.include_router(evaluation.router)
+app.include_router(employes.router)
 
 # 🔥 Initialisation officielle Tortoise
 import os
