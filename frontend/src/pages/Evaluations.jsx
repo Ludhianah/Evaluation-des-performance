@@ -1,13 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import {
-  PlusCircleIcon,
-  BuildingOffice2Icon,
-  UsersIcon,
-  ChartBarIcon,
-  Cog6ToothIcon,
-  DocumentChartBarIcon
-} from '@heroicons/react/24/outline';
+import { PlusCircleIcon, BuildingOffice2Icon, UsersIcon, ChartBarIcon, Cog6ToothIcon, DocumentChartBarIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -39,11 +32,10 @@ const Evaluations = () => {
 
   const fetchEmployees = async () => {
     try {
-      const response = await axios.get('http://localhost:8000/services/', {
+      const response = await axios.get('http://localhost:8000/employes/', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      const allEmployees = response.data.flatMap(service => service.employes || []);
-      setEmployees(allEmployees);
+      setEmployees(response.data);
     } catch (err) {
       console.error(err);
     }
@@ -78,19 +70,23 @@ const Evaluations = () => {
   };
 
   const calculateScore = (realisation, indicateur) => {
-    if (!realisation || !indicateur?.cible) {
+    if (!realisation || !indicateur) {
       setCalculatedScore(null);
       return;
     }
 
-    const cible = parseFloat(indicateur.cible);
-    const real = parseFloat(realisation);
+    let note;
+    if (indicateur.type === "QUANTITATIF") {
+      const cible = parseFloat(indicateur.valeur_cible);
+      note = cible ? (realisation / cible) * 100 : 0;
+    } else {
+      note = realisation;
+    }
 
-    let pourcentage = (real / cible) * 100;
-    if (pourcentage > 100) pourcentage = 100;
-    if (pourcentage < 0) pourcentage = 0;
+    if (note > 100) note = 100;
+    if (note < 0) note = 0;
 
-    setCalculatedScore({ pourcentage: pourcentage.toFixed(0) });
+    setCalculatedScore({ pourcentage: note.toFixed(0) });
   };
 
   const handleSubmit = async (e) => {
@@ -103,7 +99,9 @@ const Evaluations = () => {
       await axios.post('http://localhost:8000/evaluations/', {
         employe_id: parseInt(formData.employe_id),
         indicateur_id: parseInt(formData.indicateur_id),
-        realisation: parseFloat(formData.realisation)
+        realisation: parseFloat(formData.realisation),
+        mois: new Date().getMonth() + 1,
+        annee: new Date().getFullYear()
       }, {
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -123,7 +121,7 @@ const Evaluations = () => {
       setCalculatedScore(null);
 
     } catch (err) {
-      setError("Erreur lors de la création");
+      setError("Erreur lors de la création de l'évaluation");
     } finally {
       setLoading(false);
     }
@@ -140,7 +138,6 @@ const Evaluations = () => {
   const quantitatifs = evaluationResults.filter(r => r.indicateur?.type === "QUANTITATIF");
   const qualitatifs = evaluationResults.filter(r => r.indicateur?.type === "QUALITATIF");
 
-  // 🔹 Tous les boutons avec rôles autorisés
   const allNavButtons = [
     { name: 'Services', icon: BuildingOffice2Icon, path: '/dashboard/services', roles: ['ADMIN'] },
     { name: 'Utilisateurs', icon: UsersIcon, path: '/dashboard/users', roles: ['ADMIN'] },
@@ -149,23 +146,16 @@ const Evaluations = () => {
     { name: 'Rapports', icon: DocumentChartBarIcon, path: '/dashboard/reports', roles: ['ADMIN'] },
   ];
 
-  // 🔹 Filtrer selon le rôle de l’utilisateur
   const navButtons = allNavButtons.filter(btn => btn.roles.includes(user?.role));
 
   return (
     <div className="space-y-8">
-
       <h1 className="text-2xl font-bold flex items-center justify-between">
         Nouvelle Évaluation
-
-        {/* 🔹 Boutons de navigation */}
         <div className="flex space-x-2">
           {navButtons.map(btn => (
-            <button
-              key={btn.name}
-              onClick={() => navigate(btn.path)}
-              className="flex items-center bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm font-medium"
-            >
+            <button key={btn.name} onClick={() => navigate(btn.path)}
+              className="flex items-center bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-sm font-medium">
               <btn.icon className="h-4 w-4 mr-1" />
               {btn.name}
             </button>
@@ -176,47 +166,23 @@ const Evaluations = () => {
       {/* FORMULAIRE */}
       <div className="bg-white shadow rounded-lg p-6">
         <form onSubmit={handleSubmit} className="space-y-4">
-          <select
-            required
-            value={formData.employe_id}
-            onChange={(e) => setFormData({ ...formData, employe_id: e.target.value })}
-            className="w-full border rounded p-2"
-          >
+          <select required value={formData.employe_id} onChange={(e) => setFormData({ ...formData, employe_id: e.target.value })} className="w-full border rounded p-2">
             <option value="">Sélectionner un employé</option>
             {employees.map((e) => (
-              <option key={e.id} value={e.id}>
-                {e.nom} {e.prenom}
-              </option>
+              <option key={e.id} value={e.id}>{e.nom}</option>
             ))}
           </select>
 
-          <select
-            required
-            value={formData.indicateur_id}
-            onChange={(e) => handleIndicateurChange(e.target.value)}
-            className="w-full border rounded p-2"
-          >
+          <select required value={formData.indicateur_id} onChange={(e) => handleIndicateurChange(e.target.value)} className="w-full border rounded p-2">
             <option value="">Sélectionner un indicateur</option>
             {indicateurs.map((i) => (
-              <option key={i.id} value={i.id}>
-                {i.nom}
-              </option>
+              <option key={i.id} value={i.id}>{i.libelle}</option>
             ))}
           </select>
 
-          <input
-            type="number"
-            required
-            value={formData.realisation}
-            onChange={(e) => handleRealisationChange(e.target.value)}
-            placeholder="Réalisation"
-            className="w-full border rounded p-2"
-          />
+          <input type="number" required value={formData.realisation} onChange={(e) => handleRealisationChange(e.target.value)} placeholder="Réalisation" className="w-full border rounded p-2" />
 
-          <button
-            type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded flex items-center"
-          >
+          <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded flex items-center">
             <PlusCircleIcon className="h-5 w-5 mr-1" />
             Ajouter au tableau
           </button>
@@ -240,32 +206,22 @@ const Evaluations = () => {
             <tbody>
               {quantitatifs.map((item, index) => (
                 <tr key={"q" + index}>
-                  {index === 0 && (
-                    <td rowSpan={quantitatifs.length} className="border px-4 py-2 font-bold">
-                      Quantitative
-                    </td>
-                  )}
-                  <td className="border px-4 py-2">{item.indicateur.nom}</td>
-                  <td className="border px-4 py-2">{item.indicateur.cible}</td>
+                  {index === 0 && <td rowSpan={quantitatifs.length} className="border px-4 py-2 font-bold">Quantitative</td>}
+                  <td className="border px-4 py-2">{item.indicateur.libelle}</td>
+                  <td className="border px-4 py-2">{item.indicateur.valeur_cible}</td>
                   <td className="border px-4 py-2">{item.realisation}</td>
                   <td className="border px-4 py-2">{item.note}%</td>
                 </tr>
               ))}
-
               {qualitatifs.map((item, index) => (
                 <tr key={"ql" + index}>
-                  {index === 0 && (
-                    <td rowSpan={qualitatifs.length} className="border px-4 py-2 font-bold">
-                      Qualitative
-                    </td>
-                  )}
-                  <td className="border px-4 py-2">{item.indicateur.nom}</td>
-                  <td className="border px-4 py-2">{item.indicateur.cible || "Très bon"}</td>
+                  {index === 0 && <td rowSpan={qualitatifs.length} className="border px-4 py-2 font-bold">Qualitative</td>}
+                  <td className="border px-4 py-2">{item.indicateur.libelle}</td>
+                  <td className="border px-4 py-2">{item.indicateur.valeur_cible || "Très bon"}</td>
                   <td className="border px-4 py-2">{item.realisation}</td>
                   <td className="border px-4 py-2">{item.note}%</td>
                 </tr>
               ))}
-
               <tr className="bg-gray-100 font-bold">
                 <td className="border px-4 py-2">TOTAL / MOYENNE</td>
                 <td className="border px-4 py-2">—</td>
@@ -277,7 +233,6 @@ const Evaluations = () => {
           </table>
         </div>
       )}
-
     </div>
   );
 };

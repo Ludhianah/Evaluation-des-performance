@@ -11,6 +11,7 @@ import Indicateurs from './pages/Indicateurs';
 import Evaluations from './pages/Evaluations';
 import Services from './pages/Services';
 import Users from './pages/Users';
+import Employees from './pages/Employees';
 import Reports from './pages/Reports';
 import DashboardLayout from './components/DashboardLayout';
 
@@ -66,6 +67,13 @@ function App() {
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
                     <Users />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/dashboard/employees" element={
+                <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
+                  <DashboardLayout>
+                    <Employees />
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
