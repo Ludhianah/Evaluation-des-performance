@@ -18,7 +18,7 @@ router = APIRouter(prefix="/evaluations", tags=["Évaluations"])
 
 
 # ----------------------------
-# ✅ Modèles Pydantic
+# ✅ Modèles Pydantic pour la réponse
 # ----------------------------
 EvaluationDetail_Pydantic = pydantic_model_creator(
     EvaluationDetail,
@@ -54,15 +54,18 @@ async def creer_evaluation(
 
     # 🔹 Vérification service pour RESPONSABLE
     if current_user.role == RoleEnum.RESPONSABLE:
-        if employe.service_id != current_user.service_id:
+        # Fetch the service for both employe and current_user
+        employe_service = await employe.service
+        current_user_service = await current_user.service
+        if employe_service.id != current_user_service.id:
             raise HTTPException(status_code=403, detail="Interdit pour ce service")
 
     # 🔹 Créer ou récupérer évaluation mensuelle
     evaluation, created = await Evaluation.get_or_create(
-        employe=employe,
+        employe=employe,  # objet Employe
         mois=data.mois,
         annee=data.annee,
-        defaults={"responsable_id": current_user.id}
+        defaults={"responsable": current_user}  # objet User
     )
 
     # 🔹 Calcul note
@@ -70,6 +73,9 @@ async def creer_evaluation(
         note = (data.realisation / indicateur.valeur_cible) * 100 if indicateur.valeur_cible else 0
     else:
         note = data.realisation
+
+    # Limite note à 0-100
+    note = max(0, min(100, note))
 
     # 🔹 Créer détail
     await EvaluationDetail.create(
@@ -81,7 +87,7 @@ async def creer_evaluation(
 
     # 🔹 Recalcul total
     details = await EvaluationDetail.filter(evaluation=evaluation)
-    total = sum(d.note for d in details) / len(details)
+    total = sum(d.note for d in details) / len(details) if details else 0
 
     evaluation.total_score = total
     await evaluation.save()
@@ -106,7 +112,9 @@ async def lister_evaluations(current_user: User = Depends(get_current_user)):
     )
 
     if current_user.role == RoleEnum.RESPONSABLE:
-        query = query.filter(employe__service_id=current_user.service_id)
+        # Fetch the current user's service to get the actual service object
+        current_user_service = await current_user.service
+        query = query.filter(employe__service=current_user_service)
 
     evaluations = await query
 
@@ -162,7 +170,10 @@ async def obtenir_evaluation(
         raise HTTPException(status_code=404, detail="Évaluation non trouvée")
 
     if current_user.role == RoleEnum.RESPONSABLE:
-        if evaluation.employe.service_id != current_user.service_id:
+        # Fetch the service for both employe and current_user
+        employe_service = await evaluation.employe.service
+        current_user_service = await current_user.service
+        if employe_service.id != current_user_service.id:
             raise HTTPException(status_code=403, detail="Accès refusé")
 
     return await Evaluation_Pydantic.from_tortoise_orm(evaluation)
@@ -183,7 +194,10 @@ async def supprimer_evaluation(
         raise HTTPException(status_code=404, detail="Évaluation non trouvée")
 
     if current_user.role == RoleEnum.RESPONSABLE:
-        if evaluation.employe.service_id != current_user.service_id:
+        # Fetch the service for both employe and current_user
+        employe_service = await evaluation.employe.service
+        current_user_service = await current_user.service
+        if employe_service.id != current_user_service.id:
             raise HTTPException(status_code=403, detail="Interdit pour ce service")
 
     await evaluation.delete()

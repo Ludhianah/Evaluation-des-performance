@@ -131,7 +131,8 @@ class Evaluation(Model):
     employe: fields.ForeignKeyRelation[Employe] = fields.ForeignKeyField(
         "models.Employe",
         related_name="evaluations",
-        on_delete=fields.CASCADE
+        on_delete=fields.CASCADE,
+        db_column="employe_id"
     )
 
     responsable: fields.ForeignKeyRelation[User] = fields.ForeignKeyField(
