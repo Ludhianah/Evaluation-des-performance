@@ -12,13 +12,14 @@ const Navbar = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+
   const allNavButtons = [
     { name: 'Services', icon: BuildingOffice2Icon, path: '/dashboard/services', roles: ['ADMIN'] },
     { name: 'Utilisateurs', icon: UsersIcon, path: '/dashboard/users', roles: ['ADMIN'] },
+    { name: 'Employés', icon: UsersIcon, path: '/dashboard/employees', roles: ['ADMIN', 'RESPONSABLE'] }, // 🔹 ajouté
     { name: 'Objectifs', icon: ChartBarIcon, path: '/dashboard/objectifs', roles: ['ADMIN', 'RESPONSABLE'] },
     { name: 'Indicateurs', icon: Cog6ToothIcon, path: '/dashboard/indicateurs', roles: ['ADMIN', 'RESPONSABLE'] },
     { name: 'Rapports', icon: DocumentChartBarIcon, path: '/dashboard/reports', roles: ['ADMIN'] },
-    
   ];
 
   const navButtons = allNavButtons.filter(btn =>

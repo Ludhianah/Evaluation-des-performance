@@ -23,7 +23,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
   const userNavigation = [
     { name: 'Accueil', href: '/dashboard', icon: BuildingOffice2Icon },
     { name: 'Évaluations', href: '/dashboard/evaluations', icon: DocumentTextIcon },
-    { name: 'Employés', href: '/dashboard/employees', icon: DocumentTextIcon },
   ];
 
   const navigation = isAdmin ? adminNavigation : userNavigation;
