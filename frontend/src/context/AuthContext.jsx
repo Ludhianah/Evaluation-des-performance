@@ -115,14 +115,16 @@ export const AuthProvider = ({ children }) => {
   // Verify token on app load
   useEffect(() => {
     const verifyToken = async () => {
-      if (token) {
+      const storedToken = localStorage.getItem('token');
+      if (storedToken) {
         try {
           const response = await axios.get(`${API_BASE_URL}/auth/me`, {
             headers: {
-              Authorization: `Bearer ${token}`
+              Authorization: `Bearer ${storedToken}`
             }
           });
           setUser(response.data);
+          setToken(storedToken);
         } catch (err) {
           // Token is invalid, clear it
           localStorage.removeItem('token');
@@ -133,7 +135,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     verifyToken();
-  }, [token]);
+  }, []);
 
   const value = {
     user,

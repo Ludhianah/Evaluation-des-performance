@@ -20,41 +20,33 @@ const Objectifs = () => {
 
   const token = localStorage.getItem('token');
 
-  // 🔹 Charger les services au montage
+  // 🔹 Charger les services et objectifs au montage
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const res = await axios.get('http://localhost:8000/services/', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        setServices(res.data);
-      } catch (err) {
-        console.error('Erreur services:', err);
-      }
-    };
-    fetchServices();
-  }, [token]);
-
-  // 🔹 Charger les objectifs après que les services soient disponibles
-  useEffect(() => {
-    if (services.length === 0) return;
-
-    const fetchObjectifs = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8000/objectifs/', {
+        setError('');
+        
+        // Charger les services
+        const servicesRes = await axios.get('http://localhost:8000/services/', {
           headers: { Authorization: `Bearer ${token}` }
         });
-        setObjectifs(response.data);
+        setServices(servicesRes.data);
+        
+        // Charger les objectifs
+        const objectifsRes = await axios.get('http://localhost:8000/objectifs/', {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        setObjectifs(objectifsRes.data);
       } catch (err) {
-        setError('Erreur lors du chargement des objectifs');
+        setError('Erreur lors du chargement des données');
         console.error(err);
       } finally {
         setLoading(false);
       }
     };
-    fetchObjectifs();
-  }, [services, token]);
+    fetchData();
+  }, [token]);
 
   // 🔹 Récupérer le nom du service
   const getServiceName = (id) => {

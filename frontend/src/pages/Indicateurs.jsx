@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { useAuth } from '../context/AuthContext';
 
 const Indicateurs = () => {
   const [indicateurs, setIndicateurs] = useState([]);
@@ -12,19 +13,22 @@ const Indicateurs = () => {
 
   const [formData, setFormData] = useState({
     libelle: '',
-    description: '',
     type: 'QUANTITATIF',
     valeur_cible: '',
-    unite: '',
     objectif_id: ''
   });
 
-  const token = localStorage.getItem('token');
+  const { token } = useAuth();
 
   useEffect(() => {
-    fetchIndicateurs();
-    fetchObjectifs();
-  }, []);
+    if (token) {
+      fetchIndicateurs();
+      fetchObjectifs();
+    } else {
+      console.log('No token available');
+      setError('Veuillez vous connecter pour accéder à cette page');
+    }
+  }, [token]);
 
   const fetchIndicateurs = async () => {
     try {
@@ -60,10 +64,8 @@ const Indicateurs = () => {
     try {
       const dataToSend = {
         libelle: formData.libelle,
-        description: formData.description,
         type: formData.type,
         valeur_cible: formData.valeur_cible ? parseFloat(formData.valeur_cible) : null,
-        unite: formData.unite,
         objectif_id: formData.objectif_id ? parseInt(formData.objectif_id) : null
       };
 
@@ -79,7 +81,7 @@ const Indicateurs = () => {
 
       setIsModalOpen(false);
       setEditingIndicateur(null);
-      setFormData({ libelle: '', description: '', type: 'QUANTITATIF', valeur_cible: '', unite: '', objectif_id: '' });
+      setFormData({ libelle: '', type: 'QUANTITATIF', valeur_cible: '', objectif_id: '' });
       fetchIndicateurs();
     } catch (err) {
       setError(editingIndicateur ? 'Erreur lors de la mise à jour' : 'Erreur lors de la création');
@@ -105,18 +107,16 @@ const Indicateurs = () => {
     setEditingIndicateur(indicateur);
     setFormData({
       libelle: indicateur.libelle,
-      description: indicateur.description,
       type: indicateur.type || 'QUANTITATIF',
       valeur_cible: indicateur.valeur_cible,
-      unite: indicateur.unite,
-      objectif_id: indicateur.objectif_id
+      objectif_id: indicateur.objectif ? indicateur.objectif.id : ''
     });
     setIsModalOpen(true);
   };
 
   const openModal = () => {
     setEditingIndicateur(null);
-    setFormData({ libelle: '', description: '', type: 'QUANTITATIF', valeur_cible: '', unite: '', objectif_id: '' });
+    setFormData({ libelle: '', type: 'QUANTITATIF', valeur_cible: '', objectif_id: '' });
     setIsModalOpen(true);
   };
 
@@ -153,10 +153,8 @@ const Indicateurs = () => {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Objectif</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cible</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unité</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -164,14 +162,10 @@ const Indicateurs = () => {
               {indicateurs.map((indicateur) => (
                 <tr key={indicateur.id}>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{indicateur.libelle}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.description}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {indicateur.objectif}
-                    {/* {objectifs.find(obj => obj.id === indicateur.objectif_id)?.libelle || 'Non spécifié'} */}
-
+                    {indicateur.objectif ? indicateur.objectif.libelle : 'Non spécifié'}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.valeur_cible}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{indicateur.unite}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
                     <button
                       onClick={() => handleEdit(indicateur)}
@@ -214,14 +208,6 @@ const Indicateurs = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Description</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
                     <label className="block text-sm font-medium text-gray-700">Objectif</label>
                     <select
                       required
@@ -253,16 +239,6 @@ const Indicateurs = () => {
                       step="0.01"
                       value={formData.valeur_cible}
                       onChange={(e) => setFormData({...formData, valeur_cible: e.target.value})}
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Unité</label>
-                    <input
-                      type="text"
-                      required
-                      value={formData.unite}
-                      onChange={(e) => setFormData({...formData, unite: e.target.value})}
                       className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     />
                   </div>
