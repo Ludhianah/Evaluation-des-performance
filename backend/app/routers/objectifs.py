@@ -25,17 +25,24 @@ async def admin_required(current_user: User = Depends(get_current_user)):
 async def responsable_or_admin_for_service(service_id: int, current_user: User = Depends(get_current_user)):
     if current_user.role == RoleEnum.ADMIN.value:
         return current_user
+
     elif current_user.role == RoleEnum.RESPONSABLE.value:
-        # Récupérer le service lié à l'utilisateur
         user_service = await current_user.service.first()
+
         if not user_service:
-            raise HTTPException(status_code=403, detail="Vous n'avez pas de service assigné")
+            raise HTTPException(
+                status_code=403,
+                detail="Vous n'avez pas de service assigné"
+            )
+
         if user_service.id != service_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Vous ne pouvez gérer que les objectifs de votre service"
             )
+
         return current_user
+
     else:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -58,8 +65,21 @@ async def creer_objectif(
     current_user: User = Depends(check_create_objectif_permissions)
 ):
     try:
+        # Vérifier que le service existe
+        service = await Service.get_or_none(id=objectif_data.service_id)
+        if not service:
+            raise HTTPException(
+                status_code=400,
+                detail="Service non trouvé"
+            )
+        
         objectif = await Objectif.create(**objectif_data.dict())
+
+        # Charger le service
+        await objectif.fetch_related("service")
+
         return await Objectif_Pydantic.from_tortoise_orm(objectif)
+
     except IntegrityError:
         raise HTTPException(
             status_code=400,
@@ -69,26 +89,39 @@ async def creer_objectif(
 # 📋 Lister tous les objectifs
 @router.get("/", response_model=List[Objectif_Pydantic])
 async def lister_objectifs(current_user: User = Depends(get_current_user)):
+
     if current_user.role == RoleEnum.RESPONSABLE.value:
         user_service = await current_user.service.first()
+
         if not user_service:
             return []
+
         return await Objectif_Pydantic.from_queryset(
             Objectif.filter(service_id=user_service.id)
+            .select_related("service")   # ✅ CORRECTION ICI
         )
-    return await Objectif_Pydantic.from_queryset(Objectif.all())
+
+    return await Objectif_Pydantic.from_queryset(
+        Objectif.all().select_related("service")   # ✅ CORRECTION ICI
+    )
 
 # 🔍 Obtenir un objectif par ID
 @router.get("/{objectif_id}", response_model=Objectif_Pydantic)
 async def obtenir_objectif(objectif_id: int, current_user: User = Depends(get_current_user)):
+
     objectif = await Objectif.get_or_none(id=objectif_id).select_related("service")
+
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
 
     if current_user.role == RoleEnum.RESPONSABLE.value:
         user_service = await current_user.service.first()
+
         if not user_service or user_service.id != objectif.service.id:
-            raise HTTPException(status_code=403, detail="Accès refusé à cet objectif")
+            raise HTTPException(
+                status_code=403,
+                detail="Accès refusé à cet objectif"
+            )
 
     return await Objectif_Pydantic.from_tortoise_orm(objectif)
 
@@ -99,7 +132,9 @@ async def mettre_a_jour_objectif(
     objectif_data: ObjectifIn_Pydantic,
     current_user: User = Depends(get_current_user)
 ):
+
     objectif = await Objectif.get_or_none(id=objectif_id).select_related("service")
+
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
 
@@ -112,6 +147,10 @@ async def mettre_a_jour_objectif(
 
     await objectif.update_from_dict(objectif_data.dict(exclude_unset=True))
     await objectif.save()
+
+    # Recharger le service après modification
+    await objectif.fetch_related("service")
+
     return await Objectif_Pydantic.from_tortoise_orm(objectif)
 
 # 🗑 Supprimer un objectif
@@ -120,7 +159,9 @@ async def supprimer_objectif(
     objectif_id: int,
     current_user: User = Depends(get_current_user)
 ):
+
     objectif = await Objectif.get_or_none(id=objectif_id).select_related("service")
+
     if not objectif:
         raise HTTPException(status_code=404, detail="Objectif non trouvé")
 
@@ -128,4 +169,5 @@ async def supprimer_objectif(
     await responsable_or_admin_for_service(objectif.service.id, current_user)
 
     await objectif.delete()
+
     return {"message": "Objectif supprimé avec succès"}

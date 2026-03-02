@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, Field, conint, model_validator
+from pydantic import BaseModel, Field, conint, model_validator, field_validator
 from enum import Enum
 from datetime import date
 
@@ -39,6 +39,25 @@ class ObjectifCreate(BaseModel):
     libelle: str
     date: date
     service_id: int
+    
+    @field_validator('date', mode='before')
+    @classmethod
+    def validate_date(cls, v):
+        if isinstance(v, str):
+            try:
+                return date.fromisoformat(v)
+            except ValueError:
+                raise ValueError("Date must be in YYYY-MM-DD format")
+        return v
+
+# Réponse simplifiée pour Objectif (sans description ni unité)
+class ObjectifResponse(BaseModel):
+    id: int
+    libelle: str
+    date: date
+
+    class Config:
+        orm_mode = True
 
 # =====================================================
 # INDICATEUR
@@ -49,13 +68,22 @@ class IndicateurCreate(BaseModel):
     valeur_cible: Optional[float] = None
     objectif_id: int
 
-    # ✅ Pydantic v2 : validation après instanciation
     @model_validator(mode="after")
     def check_valeur_cible(cls, model):
         if model.type == TypeIndicateurEnum.QUALITATIF:
-            # Pour les qualitatifs, valeur_cible doit être None
             model.valeur_cible = None
         return model
+
+# Réponse complète pour un indicateur avec objectif
+class IndicateurResponse(BaseModel):
+    id: int
+    libelle: str
+    type: TypeIndicateurEnum
+    valeur_cible: Optional[float] = None
+    objectif: ObjectifResponse
+
+    class Config:
+        orm_mode = True
 
 # =====================================================
 # ÉVALUATION
