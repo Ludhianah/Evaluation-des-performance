@@ -4,8 +4,7 @@ import {
   PlusCircleIcon, 
   PencilIcon, 
   TrashIcon, 
-  UserIcon, 
-  BuildingOfficeIcon 
+  UserIcon
 } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
 
@@ -203,7 +202,7 @@ const Employees = () => {
 
                   {/* Bouton Évaluer */}
                   <button
-                    onClick={() => navigate(`/evaluation/${employee.id}`)}
+                    onClick={() => navigate(`/dashboard/evaluations/${employee.id}`)}
                     className="text-blue-600 hover:text-blue-900"
                   >
                     Évaluer
@@ -230,7 +229,7 @@ const Employees = () => {
         </table>
       </div>
 
-      {/* Modal reste identique */}
+      {/* Modal Employé */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex justify-center items-center">
           <div className="bg-white p-6 rounded-md w-96">

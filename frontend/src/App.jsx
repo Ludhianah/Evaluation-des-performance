@@ -34,6 +34,7 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+              
               <Route path="/dashboard/objectifs" element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
                   <DashboardLayout>
@@ -49,6 +50,8 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+
+              {/* Route pour évaluation générale */}
               <Route path="/dashboard/evaluations" element={
                 <ProtectedRoute>
                   <DashboardLayout>
@@ -56,6 +59,16 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+
+              {/* Route dynamique pour évaluation d'un employé spécifique */}
+              <Route path="/dashboard/evaluations/:employeId" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <Evaluations />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
               <Route path="/dashboard/services" element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
@@ -63,6 +76,7 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+
               <Route path="/dashboard/users" element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
@@ -70,6 +84,7 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+
               <Route path="/dashboard/employees" element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
                   <DashboardLayout>
@@ -77,6 +92,7 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+
               <Route path="/dashboard/reports" element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
@@ -93,6 +109,7 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
+
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
             </Routes>
           </div>
