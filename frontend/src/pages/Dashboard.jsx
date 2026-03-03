@@ -15,7 +15,6 @@ const Dashboard = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
 
-  // Données fictives pour les indicateurs de performance
   const performanceStats = {
     evaluationsCompletes: 72,
     evaluationsEnCours: 12,
@@ -23,7 +22,6 @@ const Dashboard = () => {
     indicateursPositifs: 68,
   };
 
-  // Cartes d'accès rapide
   const quickAccessCards = [
     ...(isAdmin
       ? [
@@ -33,7 +31,7 @@ const Dashboard = () => {
             icon: TrophyIcon,
             href: '/dashboard/objectifs',
             bgColor: 'bg-blue-50',
-            textColor: 'text-blue-700',
+            textColor: 'text-blue-600',
             borderColor: 'border-blue-200',
           },
           {
@@ -42,7 +40,7 @@ const Dashboard = () => {
             icon: PresentationChartLineIcon,
             href: '/dashboard/indicateurs',
             bgColor: 'bg-purple-50',
-            textColor: 'text-purple-700',
+            textColor: 'text-purple-600',
             borderColor: 'border-purple-200',
           },
         ]
@@ -53,7 +51,7 @@ const Dashboard = () => {
       icon: ClipboardDocumentCheckIcon,
       href: '/dashboard/evaluations',
       bgColor: 'bg-green-50',
-      textColor: 'text-green-700',
+      textColor: 'text-green-600',
       borderColor: 'border-green-200',
     },
     {
@@ -62,15 +60,14 @@ const Dashboard = () => {
       icon: UserGroupIcon,
       href: '/dashboard/equipe',
       bgColor: 'bg-yellow-50',
-      textColor: 'text-yellow-700',
+      textColor: 'text-yellow-600',
       borderColor: 'border-yellow-200',
     },
   ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-      {/* En-tête du Dashboard */}
+      {/* En-tête */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -81,7 +78,7 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center p-3 bg-blue-50 rounded-lg">
+          <div className="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
             <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
             <span className="text-sm font-medium text-gray-700">
               {user?.username} • {user?.role}
@@ -90,73 +87,57 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Statistiques de Performance */}
+      {/* Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Évaluations complètes</p>
-              <p className="mt-1 text-3xl font-bold text-gray-900">{performanceStats.evaluationsCompletes}%</p>
+        {[
+          {
+            title: 'Évaluations complètes',
+            value: `${performanceStats.evaluationsCompletes}%`,
+            icon: ClipboardDocumentCheckIcon,
+            color: 'green',
+            progress: performanceStats.evaluationsCompletes,
+          },
+          {
+            title: 'Évaluations en cours',
+            value: performanceStats.evaluationsEnCours,
+            icon: PresentationChartLineIcon,
+            color: 'yellow',
+          },
+          {
+            title: 'Objectifs atteints',
+            value: `${performanceStats.objectifsAtteints}%`,
+            icon: TrophyIcon,
+            color: 'blue',
+            progress: performanceStats.objectifsAtteints,
+          },
+          {
+            title: 'Indicateurs positifs',
+            value: `${performanceStats.indicateursPositifs}%`,
+            icon: ChartBarIcon,
+            color: 'purple',
+            progress: performanceStats.indicateursPositifs,
+          },
+        ].map((stat, index) => (
+          <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
+                <p className="mt-1 text-3xl font-bold text-gray-900">{stat.value}</p>
+              </div>
+              <div className={`p-3 rounded-lg bg-${stat.color}-100`}>
+                <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+              </div>
             </div>
-            <div className="p-3 bg-green-100 rounded-lg">
-              <ClipboardDocumentCheckIcon className="h-6 w-6 text-green-600" />
-            </div>
+            {stat.progress && (
+              <div className="mt-4 h-2 bg-gray-200 rounded-full">
+                <div
+                  className={`h-2 rounded-full bg-${stat.color}-500`}
+                  style={{ width: `${stat.progress}%` }}
+                ></div>
+              </div>
+            )}
           </div>
-          <div className="mt-4 h-2 bg-gray-200 rounded-full">
-            <div
-              className="h-2 bg-green-500 rounded-full"
-              style={{ width: `${performanceStats.evaluationsCompletes}%` }}
-            ></div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Évaluations en cours</p>
-              <p className="mt-1 text-3xl font-bold text-gray-900">{performanceStats.evaluationsEnCours}</p>
-            </div>
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <PresentationChartLineIcon className="h-6 w-6 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Objectifs atteints</p>
-              <p className="mt-1 text-3xl font-bold text-gray-900">{performanceStats.objectifsAtteints}%</p>
-            </div>
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <TrophyIcon className="h-6 w-6 text-blue-600" />
-            </div>
-          </div>
-          <div className="mt-4 h-2 bg-gray-200 rounded-full">
-            <div
-              className="h-2 bg-blue-500 rounded-full"
-              style={{ width: `${performanceStats.objectifsAtteints}%` }}
-            ></div>
-          </div>
-        </div>
-
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500">Indicateurs positifs</p>
-              <p className="mt-1 text-3xl font-bold text-gray-900">{performanceStats.indicateursPositifs}%</p>
-            </div>
-            <div className="p-3 bg-purple-100 rounded-lg">
-              <ChartBarIcon className="h-6 w-6 text-purple-600" />
-            </div>
-          </div>
-          <div className="mt-4 h-2 bg-gray-200 rounded-full">
-            <div
-              className="h-2 bg-purple-500 rounded-full"
-              style={{ width: `${performanceStats.indicateursPositifs}%` }}
-            ></div>
-          </div>
-        </div>
+        ))}
       </div>
 
       {/* Accès rapide */}
@@ -188,68 +169,6 @@ const Dashboard = () => {
               </div>
             </Link>
           ))}
-        </div>
-      </div>
-
-      {/* Section Évaluations récentes */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-xl font-semibold text-gray-800">Évaluations récentes</h2>
-          <Link to="/dashboard/evaluations" className="text-sm font-medium text-blue-600 hover:text-blue-800">
-            Voir toutes les évaluations
-          </Link>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employé</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Poste</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Score</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {[
-                { name: 'Rakoto Jean', poste: 'Développeur', date: '12/06/2026', score: 85, statut: 'Complète' },
-                { name: 'Rabe Marie', poste: 'Designer', date: '10/06/2026', score: 92, statut: 'Complète' },
-                { name: 'Andria Paul', poste: 'Manager', date: '08/06/2026', score: 78, statut: 'En cours' },
-                { name: 'Rasoanaivo Lala', poste: 'Marketing', date: '05/06/2026', score: 88, statut: 'Complète' },
-              ].map((evaluation, index) => (
-                <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{evaluation.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{evaluation.poste}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{evaluation.date}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <div className="flex items-center">
-                      <span className="mr-2">{evaluation.score}/100</span>
-                      <div className="w-24 h-2 bg-gray-200 rounded-full">
-                        <div
-                          className="h-2 rounded-full"
-                          style={{
-                            width: `${evaluation.score}%`,
-                            backgroundColor: evaluation.score >= 80 ? '#10B981' : evaluation.score >= 50 ? '#F59E0B' : '#EF4444',
-                          }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        evaluation.statut === 'Complète'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-yellow-100 text-yellow-800'
-                      }`}
-                    >
-                      {evaluation.statut}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

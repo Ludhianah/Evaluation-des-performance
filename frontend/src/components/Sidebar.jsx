@@ -5,7 +5,8 @@ import {
   DocumentTextIcon,
   Bars3Icon,
   XMarkIcon,
-  ArrowRightOnRectangleIcon // Icon pour déconnexion
+  ArrowRightOnRectangleIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../context/AuthContext';
 
@@ -27,7 +28,6 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
   const navigation = isAdmin ? adminNavigation : userNavigation;
 
-  // 🔹 Fonction de déconnexion
   const handleLogout = () => {
     localStorage.removeItem('token');
     navigate('/login');
@@ -37,7 +37,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     <>
       {/* Bouton mobile */}
       <button
-        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-white/80 backdrop-blur-sm rounded-lg shadow-md"
+        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-lg shadow-md border border-gray-200"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? (
@@ -49,74 +49,84 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
 
       {/* Sidebar */}
       <div
-        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white/90 backdrop-blur-sm border-r border-gray-200 flex flex-col shadow-lg transition-transform duration-300 ${
+        className={`fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-200 flex flex-col shadow-lg transition-transform duration-300 ${
           isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
         }`}
       >
         {/* Header */}
-        <div className="flex items-center justify-center h-16 border-b border-gray-200 bg-white/50">
+        <div className="flex items-center justify-center h-16 border-b border-gray-200 bg-gray-50">
           <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-800">Dashboard</h1>
-            <p className={`text-xs mt-1 ${isAdmin ? 'text-blue-600' : 'text-green-600'}`}>
-              {user?.role || 'Utilisateur'}
+            <h1 className="text-xl font-bold text-gray-800">Performance</h1>
+            <p className={`text-xs mt-1 font-medium ${
+              isAdmin ? 'text-blue-600' : 'text-green-600'
+            }`}>
+              {user?.role}
             </p>
           </div>
         </div>
 
         {/* Navigation */}
-        <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-          {navigation.map((item) => (
-            <Link
-              key={item.name}
-              to={item.href}
-              className={`group flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
-                location.pathname === item.href
-                  ? 'bg-blue-100 text-blue-800 shadow-inner'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
-              }`}
-            >
-              <item.icon
-                className={`mr-3 h-5 w-5 ${
-                  location.pathname === item.href
-                    ? 'text-blue-600'
-                    : 'text-gray-400 group-hover:text-gray-500'
+        <nav className="flex-1 px-3 py-4 space-y-1">
+          {navigation.map((item) => {
+            const isActive = location.pathname === item.href;
+            return (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
+                  isActive
+                    ? 'bg-blue-50 text-blue-700 shadow-sm'
+                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
-              />
-              <span className="flex-1">{item.name}</span>
-              {location.pathname === item.href && (
-                <div className="w-1 h-6 bg-blue-600 rounded-r-lg ml-2" />
-              )}
-            </Link>
-          ))}
+              >
+                <item.icon
+                  className={`mr-3 h-5 w-5 ${
+                    isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
+                  }`}
+                />
+                <span className="flex-1">{item.name}</span>
+                {isActive && (
+                  <div className="w-1 h-6 bg-blue-600 rounded-r-lg ml-2" />
+                )}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-white/50 space-y-2">
-          <div className="text-xs text-gray-500 font-medium mb-2">Statut</div>
+        <div className="p-4 border-t border-gray-200 bg-gray-50 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-sm text-gray-600">{user?.username}</span>
+              <UserCircleIcon className="h-6 w-6 text-gray-400" />
+              <div>
+                <p className="text-sm font-medium text-gray-800">{user?.username}</p>
+                <p className="text-xs text-gray-500">Connecté</p>
+              </div>
             </div>
-            <span
-              className={`px-2 py-1 rounded-full text-xs font-medium ${
-                isAdmin ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-              }`}
-            >
+            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+              isAdmin ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+            }`}>
               {user?.role}
             </span>
           </div>
 
-          {/* 🔹 Bouton Déconnexion */}
           <button
             onClick={handleLogout}
-            className="flex items-center w-full justify-center mt-2 px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded hover:bg-red-200"
+            className="flex items-center w-full px-3 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
           >
             <ArrowRightOnRectangleIcon className="h-5 w-5 mr-2" />
             Déconnexion
           </button>
         </div>
       </div>
+
+      {/* Overlay pour mobile */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/30 md:hidden"
+          onClick={() => setIsOpen(false)}
+        />
+      )}
     </>
   );
 };
