@@ -14,6 +14,7 @@ import Users from './pages/Users';
 import Employees from './pages/Employees';
 import Reports from './pages/Reports';
 import DashboardLayout from './components/DashboardLayout';
+import EvaluationResult from './pages/EvaluationResult';
 
 function App() {
   return (
@@ -22,11 +23,12 @@ function App() {
         <Router>
           <div className="App">
             <Routes>
-              {/* Public routes */}
+
+              {/* Routes publiques */}
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
 
-              {/* Protected routes */}
+              {/* Dashboard */}
               <Route path="/dashboard" element={
                 <ProtectedRoute>
                   <DashboardLayout>
@@ -34,7 +36,8 @@ function App() {
                   </DashboardLayout>
                 </ProtectedRoute>
               } />
-              
+
+              {/* Objectifs */}
               <Route path="/dashboard/objectifs" element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
                   <DashboardLayout>
@@ -43,6 +46,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              {/* Indicateurs */}
               <Route path="/dashboard/indicateurs" element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
                   <DashboardLayout>
@@ -51,7 +55,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Route pour évaluation générale */}
+              {/* Evaluation générale */}
               <Route path="/dashboard/evaluations" element={
                 <ProtectedRoute>
                   <DashboardLayout>
@@ -60,7 +64,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Route dynamique pour évaluation d'un employé spécifique */}
+              {/* Evaluation d'un employé */}
               <Route path="/dashboard/evaluations/:employeId" element={
                 <ProtectedRoute>
                   <DashboardLayout>
@@ -69,6 +73,16 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              {/* ⭐ RESULTAT D'EVALUATION D'UN EMPLOYE */}
+              <Route path="/dashboard/evaluation-result/:employeId" element={
+                <ProtectedRoute>
+                  <DashboardLayout>
+                    <EvaluationResult />
+                  </DashboardLayout>
+                </ProtectedRoute>
+              } />
+
+              {/* Services */}
               <Route path="/dashboard/services" element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
@@ -77,6 +91,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              {/* Utilisateurs */}
               <Route path="/dashboard/users" element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
@@ -85,6 +100,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              {/* Employés */}
               <Route path="/dashboard/employees" element={
                 <ProtectedRoute requiredRoles={['ADMIN', 'RESPONSABLE']}>
                   <DashboardLayout>
@@ -93,6 +109,7 @@ function App() {
                 </ProtectedRoute>
               } />
 
+              {/* Rapports */}
               <Route path="/dashboard/reports" element={
                 <ProtectedRoute requiredRole="ADMIN">
                   <DashboardLayout>
@@ -101,16 +118,10 @@ function App() {
                 </ProtectedRoute>
               } />
 
-              {/* Default redirect based on role */}
-              <Route path="/" element={
-                <ProtectedRoute>
-                  <DashboardLayout>
-                    <Dashboard />
-                  </DashboardLayout>
-                </ProtectedRoute>
-              } />
-
+              {/* Redirection */}
+              <Route path="/" element={<Navigate to="/dashboard" replace />} />
               <Route path="*" element={<Navigate to="/dashboard" replace />} />
+
             </Routes>
           </div>
         </Router>
