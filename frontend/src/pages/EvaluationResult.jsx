@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 
 const EvaluationResult = () => {
 
-  const { employeId } = useParams(); // ⚡ Corrigé ici
+  const { employeId } = useParams();
   const token = localStorage.getItem("token");
 
   const [evaluations, setEvaluations] = useState([]);
@@ -17,7 +17,7 @@ const EvaluationResult = () => {
   const fetchEmployeeEvaluations = async () => {
     try {
       const response = await axios.get(
-        `http://localhost:8000/evaluations/employe/${employeId}`, // ⚡ utilise employeId
+        `http://localhost:8000/evaluations/employe/${employeId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -44,11 +44,11 @@ const EvaluationResult = () => {
             <h2 className="font-semibold mb-2">
               Mois : {evaluation.mois} / {evaluation.annee}
             </h2>
-            <p className="mb-2">Score total : {evaluation.score_total}</p>
 
             <table className="w-full border">
               <thead>
                 <tr className="bg-gray-100">
+                  <th className="border p-2">Type</th> {/* ⚡ Nouvelle colonne */}
                   <th className="border p-2">Indicateur</th>
                   <th className="border p-2">Objectif</th>
                   <th className="border p-2">Réalisation</th>
@@ -58,6 +58,7 @@ const EvaluationResult = () => {
               <tbody>
                 {evaluation.details.map((d, index) => (
                   <tr key={index}>
+                    <td className="border p-2">{d.type || "N/A"}</td> {/* ⚡ Type */}
                     <td className="border p-2">{d.indicateur}</td>
                     <td className="border p-2">{d.objectif}</td>
                     <td className="border p-2">{d.realisation}</td>
@@ -65,6 +66,12 @@ const EvaluationResult = () => {
                   </tr>
                 ))}
               </tbody>
+              <tfoot>
+                <tr className="bg-gray-100 font-semibold">
+                  <td colSpan={4} className="border p-2 text-right">Total</td>
+                  <td className="border p-2">{evaluation.score_total}</td>
+                </tr>
+              </tfoot>
             </table>
           </div>
         ))

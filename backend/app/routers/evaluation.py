@@ -200,6 +200,7 @@ async def resultat_par_employe(
 
             lignes.append({
                 "indicateur": d.indicateur.libelle,
+                "type": d.indicateur.type, 
                 "objectif": d.indicateur.valeur_cible,
                 "realisation": d.realisation,
                 "note": d.note
