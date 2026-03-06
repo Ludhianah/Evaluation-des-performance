@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PlusCircleIcon } from '@heroicons/react/24/outline';
+import { useParams } from "react-router-dom";
 
 const Evaluations = () => {
+
+  const { employeId } = useParams();
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
   const [formData, setFormData] = useState({
-    employe_id: '',
+    employe_id: employeId || '',
     indicateur_id: '',
     realisation: ''
   });
@@ -22,55 +27,83 @@ const Evaluations = () => {
   // CHARGEMENT INITIAL
   // ===============================
   useEffect(() => {
-    if (!token) return;
+
     fetchEmployees();
     fetchIndicateurs();
     fetchEvaluations();
-  }, [token]);
+
+    if (employeId) {
+      setFormData(prev => ({
+        ...prev,
+        employe_id: employeId
+      }));
+    }
+
+  }, [employeId]);
 
   // ===============================
   // FETCH EMPLOYES
   // ===============================
   const fetchEmployees = async () => {
+
     try {
-      const res = await axios.get('http://localhost:8000/employes/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+
+      const res = await axios.get(
+        'http://localhost:8000/employes/',
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       setEmployees(res.data);
+
     } catch (err) {
-      console.error(err);
-      setError('Erreur lors du chargement des employés');
+
+      setError("Erreur lors du chargement des employés");
+
     }
+
   };
 
   // ===============================
   // FETCH INDICATEURS
   // ===============================
   const fetchIndicateurs = async () => {
+
     try {
-      const res = await axios.get('http://localhost:8000/indicateurs/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+
+      const res = await axios.get(
+        'http://localhost:8000/indicateurs/',
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
       setIndicateurs(res.data);
+
     } catch (err) {
-      console.error(err);
-      setError('Erreur lors du chargement des indicateurs');
+
+      setError("Erreur lors du chargement des indicateurs");
+
     }
+
   };
 
   // ===============================
-  // FETCH EVALUATIONS
+  // FETCH EVALUATIONS PAR EMPLOYE
   // ===============================
   const fetchEvaluations = async () => {
+
     try {
-      const res = await axios.get('http://localhost:8000/evaluations/', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+
+      const url = employeId
+        ? `http://localhost:8000/evaluations/employe/${employeId}`
+        : `http://localhost:8000/evaluations/`;
+
+      const res = await axios.get(
+        url,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       const formatted = res.data
         .map(e =>
           e.details.map(d => ({
-            employe: e.employe,
             indicateur: d.indicateur,
             realisation: d.realisation,
             note: d.note
@@ -79,16 +112,21 @@ const Evaluations = () => {
         .flat();
 
       setEvaluationResults(formatted);
+
     } catch (err) {
+
       console.error(err);
-      setError('Erreur lors du chargement des évaluations');
+      setError("Erreur lors du chargement des évaluations");
+
     }
+
   };
 
   // ===============================
-  // HANDLE SUBMIT
+  // SUBMIT EVALUATION
   // ===============================
   const handleSubmit = async (e) => {
+
     e.preventDefault();
 
     setLoading(true);
@@ -96,6 +134,7 @@ const Evaluations = () => {
     setSuccess('');
 
     try {
+
       const res = await axios.post(
         'http://localhost:8000/evaluations/',
         {
@@ -114,33 +153,38 @@ const Evaluations = () => {
         i => i.id === parseInt(formData.indicateur_id)
       );
 
-      const employeComplet = employees.find(
-        e => e.id === parseInt(formData.employe_id)
-      );
-
       setEvaluationResults(prev => [
         ...prev,
         {
-          employe: employeComplet,
           indicateur: indicateurComplet,
           realisation: parseFloat(formData.realisation),
           note: res.data.note_calculée
         }
       ]);
 
-      setSuccess('Évaluation ajoutée avec succès !');
-      setFormData({ employe_id: '', indicateur_id: '', realisation: '' });
+      setSuccess("Évaluation ajoutée avec succès");
+
+      setFormData({
+        ...formData,
+        indicateur_id: '',
+        realisation: ''
+      });
 
     } catch (err) {
+
       console.error(err);
-      setError('Erreur lors de la création de l’évaluation');
+      setError("Erreur lors de l'ajout");
+
     } finally {
+
       setLoading(false);
+
     }
+
   };
 
   // ===============================
-  // CALCULS
+  // CALCUL MOYENNE
   // ===============================
   const moyenne =
     evaluationResults.length > 0
@@ -150,6 +194,9 @@ const Evaluations = () => {
         ).toFixed(0)
       : 0;
 
+  // ===============================
+  // FILTRE TYPE
+  // ===============================
   const quantitatifs = evaluationResults.filter(
     r => r.indicateur?.type === "QUANTITATIF"
   );
@@ -162,35 +209,41 @@ const Evaluations = () => {
   // RENDER
   // ===============================
   return (
+
     <div className="space-y-8">
 
       <h1 className="text-2xl font-bold">
-        Nouvelle Évaluation
+        Évaluation de l'employé
       </h1>
 
       {/* FORMULAIRE */}
       <div className="bg-white shadow rounded-lg p-6">
+
         {error && <div className="text-red-600 mb-3">{error}</div>}
         {success && <div className="text-green-600 mb-3">{success}</div>}
 
         <form onSubmit={handleSubmit} className="space-y-4">
 
-          <select
-            required
-            value={formData.employe_id}
-            onChange={(e) =>
-              setFormData({ ...formData, employe_id: e.target.value })
-            }
-            className="w-full border rounded p-2"
-          >
-            <option value="">Sélectionner un employé</option>
-            {employees.map(e => (
-              <option key={e.id} value={e.id}>
-                {e.nom}
-              </option>
-            ))}
-          </select>
+          {/* SELECT EMPLOYE */}
+          {!employeId && (
+            <select
+              required
+              value={formData.employe_id}
+              onChange={(e) =>
+                setFormData({ ...formData, employe_id: e.target.value })
+              }
+              className="w-full border rounded p-2"
+            >
+              <option value="">Sélectionner un employé</option>
+              {employees.map(e => (
+                <option key={e.id} value={e.id}>
+                  {e.nom}
+                </option>
+              ))}
+            </select>
+          )}
 
+          {/* INDICATEUR */}
           <select
             required
             value={formData.indicateur_id}
@@ -200,31 +253,34 @@ const Evaluations = () => {
             className="w-full border rounded p-2"
           >
             <option value="">Sélectionner un indicateur</option>
+
             {indicateurs.map(i => (
               <option key={i.id} value={i.id}>
                 {i.libelle}
               </option>
             ))}
+
           </select>
 
+          {/* REALISATION */}
           <input
             type="number"
             required
+            placeholder="Réalisation"
             value={formData.realisation}
             onChange={(e) =>
               setFormData({ ...formData, realisation: e.target.value })
             }
-            placeholder="Réalisation"
             className="w-full border rounded p-2"
           />
 
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-600 text-white px-4 py-2 rounded flex items-center disabled:opacity-50"
+            className="bg-blue-600 text-white px-4 py-2 rounded flex items-center"
           >
-            <PlusCircleIcon className="h-5 w-5 mr-1" />
-            {loading ? "Enregistrement..." : "Ajouter au tableau"}
+            <PlusCircleIcon className="h-5 w-5 mr-2" />
+            {loading ? "Enregistrement..." : "Ajouter"}
           </button>
 
         </form>
@@ -232,12 +288,15 @@ const Evaluations = () => {
 
       {/* TABLEAU RESULTAT */}
       {evaluationResults.length > 0 && (
+
         <div className="bg-white shadow rounded-lg p-6">
+
           <h2 className="text-lg font-semibold mb-4">
             Résultat de l’évaluation
           </h2>
 
           <table className="min-w-full border">
+
             <thead className="bg-gray-100">
               <tr>
                 <th className="border px-4 py-2">Type</th>
@@ -252,6 +311,7 @@ const Evaluations = () => {
 
               {quantitatifs.map((item, i) => (
                 <tr key={`q${i}`}>
+
                   {i === 0 && (
                     <td
                       rowSpan={quantitatifs.length}
@@ -260,23 +320,29 @@ const Evaluations = () => {
                       Quantitative
                     </td>
                   )}
+
                   <td className="border px-4 py-2">
                     {item.indicateur.libelle}
                   </td>
+
                   <td className="border px-4 py-2">
                     {item.indicateur.valeur_cible}
                   </td>
+
                   <td className="border px-4 py-2">
                     {item.realisation}
                   </td>
+
                   <td className="border px-4 py-2">
                     {item.note}
                   </td>
+
                 </tr>
               ))}
 
               {qualitatifs.map((item, i) => (
                 <tr key={`ql${i}`}>
+
                   {i === 0 && (
                     <td
                       rowSpan={qualitatifs.length}
@@ -285,37 +351,54 @@ const Evaluations = () => {
                       Qualitative
                     </td>
                   )}
+
                   <td className="border px-4 py-2">
                     {item.indicateur.libelle}
                   </td>
+
                   <td className="border px-4 py-2">
-                    {item.indicateur.valeur_cible || 'Très bon'}
+                    {item.indicateur.valeur_cible || "Très bon"}
                   </td>
+
                   <td className="border px-4 py-2">
                     {item.realisation}
                   </td>
+
                   <td className="border px-4 py-2">
                     {item.note}
                   </td>
+
                 </tr>
               ))}
 
               <tr className="bg-gray-100 font-bold">
-                <td className="border px-4 py-2">TOTAL / MOYENNE</td>
+
+                <td className="border px-4 py-2">
+                  TOTAL / MOYENNE
+                </td>
+
                 <td className="border px-4 py-2">—</td>
                 <td className="border px-4 py-2">—</td>
                 <td className="border px-4 py-2">—</td>
+
                 <td className="border px-4 py-2">
                   {moyenne}%
                 </td>
+
               </tr>
 
             </tbody>
+
           </table>
+
         </div>
+
       )}
+
     </div>
+
   );
+
 };
 
 export default Evaluations;
