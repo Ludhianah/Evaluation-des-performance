@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { PlusCircleIcon } from '@heroicons/react/24/outline';
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 const Evaluations = () => {
 
   const { employeId } = useParams();
+  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +20,6 @@ const Evaluations = () => {
 
   const [employees, setEmployees] = useState([]);
   const [indicateurs, setIndicateurs] = useState([]);
-  const [evaluationResults, setEvaluationResults] = useState([]);
 
   const token = localStorage.getItem('token');
 
@@ -30,7 +30,6 @@ const Evaluations = () => {
 
     fetchEmployees();
     fetchIndicateurs();
-    fetchEvaluations();
 
     if (employeId) {
       setFormData(prev => ({
@@ -86,43 +85,6 @@ const Evaluations = () => {
   };
 
   // ===============================
-  // FETCH EVALUATIONS PAR EMPLOYE
-  // ===============================
-  const fetchEvaluations = async () => {
-
-    try {
-
-      const url = employeId
-        ? `http://localhost:8000/evaluations/employe/${employeId}`
-        : `http://localhost:8000/evaluations/`;
-
-      const res = await axios.get(
-        url,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-
-      const formatted = res.data
-        .map(e =>
-          e.details.map(d => ({
-            indicateur: d.indicateur,
-            realisation: d.realisation,
-            note: d.note
-          }))
-        )
-        .flat();
-
-      setEvaluationResults(formatted);
-
-    } catch (err) {
-
-      console.error(err);
-      setError("Erreur lors du chargement des évaluations");
-
-    }
-
-  };
-
-  // ===============================
   // SUBMIT EVALUATION
   // ===============================
   const handleSubmit = async (e) => {
@@ -135,7 +97,7 @@ const Evaluations = () => {
 
     try {
 
-      const res = await axios.post(
+      await axios.post(
         'http://localhost:8000/evaluations/',
         {
           employe_id: parseInt(formData.employe_id),
@@ -149,20 +111,12 @@ const Evaluations = () => {
         }
       );
 
-      const indicateurComplet = indicateurs.find(
-        i => i.id === parseInt(formData.indicateur_id)
-      );
-
-      setEvaluationResults(prev => [
-        ...prev,
-        {
-          indicateur: indicateurComplet,
-          realisation: parseFloat(formData.realisation),
-          note: res.data.note_calculée
-        }
-      ]);
-
       setSuccess("Évaluation ajoutée avec succès");
+
+      // redirection vers résultat
+      setTimeout(() => {
+        navigate(`/dashboard/evaluation-result/${formData.employe_id}`);
+      }, 1000);
 
       setFormData({
         ...formData,
@@ -184,28 +138,6 @@ const Evaluations = () => {
   };
 
   // ===============================
-  // CALCUL MOYENNE
-  // ===============================
-  const moyenne =
-    evaluationResults.length > 0
-      ? (
-          evaluationResults.reduce((acc, curr) => acc + curr.note, 0) /
-          evaluationResults.length
-        ).toFixed(0)
-      : 0;
-
-  // ===============================
-  // FILTRE TYPE
-  // ===============================
-  const quantitatifs = evaluationResults.filter(
-    r => r.indicateur?.type === "QUANTITATIF"
-  );
-
-  const qualitatifs = evaluationResults.filter(
-    r => r.indicateur?.type === "QUALITATIF"
-  );
-
-  // ===============================
   // RENDER
   // ===============================
   return (
@@ -216,7 +148,6 @@ const Evaluations = () => {
         Évaluation de l'employé
       </h1>
 
-      {/* FORMULAIRE */}
       <div className="bg-white shadow rounded-lg p-6">
 
         {error && <div className="text-red-600 mb-3">{error}</div>}
@@ -235,11 +166,13 @@ const Evaluations = () => {
               className="w-full border rounded p-2"
             >
               <option value="">Sélectionner un employé</option>
+
               {employees.map(e => (
                 <option key={e.id} value={e.id}>
                   {e.nom}
                 </option>
               ))}
+
             </select>
           )}
 
@@ -280,120 +213,14 @@ const Evaluations = () => {
             className="bg-blue-600 text-white px-4 py-2 rounded flex items-center"
           >
             <PlusCircleIcon className="h-5 w-5 mr-2" />
+
             {loading ? "Enregistrement..." : "Ajouter"}
+
           </button>
 
         </form>
+
       </div>
-
-      {/* TABLEAU RESULTAT */}
-      {evaluationResults.length > 0 && (
-
-        <div className="bg-white shadow rounded-lg p-6">
-
-          <h2 className="text-lg font-semibold mb-4">
-            Résultat de l’évaluation
-          </h2>
-
-          <table className="min-w-full border">
-
-            <thead className="bg-gray-100">
-              <tr>
-                <th className="border px-4 py-2">Type</th>
-                <th className="border px-4 py-2">Indicateur</th>
-                <th className="border px-4 py-2">Objectif</th>
-                <th className="border px-4 py-2">Réalisation</th>
-                <th className="border px-4 py-2">Note (%)</th>
-              </tr>
-            </thead>
-
-            <tbody>
-
-              {quantitatifs.map((item, i) => (
-                <tr key={`q${i}`}>
-
-                  {i === 0 && (
-                    <td
-                      rowSpan={quantitatifs.length}
-                      className="border px-4 py-2 font-bold"
-                    >
-                      Quantitative
-                    </td>
-                  )}
-
-                  <td className="border px-4 py-2">
-                    {item.indicateur.libelle}
-                  </td>
-
-                  <td className="border px-4 py-2">
-                    {item.indicateur.valeur_cible}
-                  </td>
-
-                  <td className="border px-4 py-2">
-                    {item.realisation}
-                  </td>
-
-                  <td className="border px-4 py-2">
-                    {item.note}
-                  </td>
-
-                </tr>
-              ))}
-
-              {qualitatifs.map((item, i) => (
-                <tr key={`ql${i}`}>
-
-                  {i === 0 && (
-                    <td
-                      rowSpan={qualitatifs.length}
-                      className="border px-4 py-2 font-bold"
-                    >
-                      Qualitative
-                    </td>
-                  )}
-
-                  <td className="border px-4 py-2">
-                    {item.indicateur.libelle}
-                  </td>
-
-                  <td className="border px-4 py-2">
-                    {item.indicateur.valeur_cible || "Très bon"}
-                  </td>
-
-                  <td className="border px-4 py-2">
-                    {item.realisation}
-                  </td>
-
-                  <td className="border px-4 py-2">
-                    {item.note}
-                  </td>
-
-                </tr>
-              ))}
-
-              <tr className="bg-gray-100 font-bold">
-
-                <td className="border px-4 py-2">
-                  TOTAL / MOYENNE
-                </td>
-
-                <td className="border px-4 py-2">—</td>
-                <td className="border px-4 py-2">—</td>
-                <td className="border px-4 py-2">—</td>
-
-                <td className="border px-4 py-2">
-                  {moyenne}%
-                </td>
-
-              </tr>
-
-            </tbody>
-
-          </table>
-
-        </div>
-
-      )}
 
     </div>
 
