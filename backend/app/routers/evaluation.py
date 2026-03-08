@@ -80,6 +80,21 @@ async def creer_evaluation(
 
     note = max(0, min(100, note))
 
+    # ============================
+    # VERIFIER DOUBLON INDICATEUR
+    # ============================
+
+    detail_existant = await EvaluationDetail.get_or_none(
+        evaluation=evaluation,
+        indicateur=indicateur
+    )
+
+    if detail_existant:
+        raise HTTPException(
+            status_code=400,
+            detail="Cet indicateur est déjà évalué pour ce mois"
+        )
+
     # créer détail
     await EvaluationDetail.create(
         evaluation=evaluation,
@@ -114,7 +129,7 @@ async def lister_evaluations(current_user: User = Depends(get_current_user)):
         "employe",
         "details",
         "details__indicateur__objectif__service"
-    )
+    ).order_by("-annee", "-mois")
 
     if current_user.role == RoleEnum.RESPONSABLE:
 
@@ -188,7 +203,7 @@ async def resultat_par_employe(
     ).prefetch_related(
         "details",
         "details__indicateur"
-    )
+    ).order_by("-annee", "-mois")
 
     results = []
 
@@ -200,7 +215,7 @@ async def resultat_par_employe(
 
             lignes.append({
                 "indicateur": d.indicateur.libelle,
-                "type": d.indicateur.type, 
+                "type": d.indicateur.type,
                 "objectif": d.indicateur.valeur_cible,
                 "realisation": d.realisation,
                 "note": d.note

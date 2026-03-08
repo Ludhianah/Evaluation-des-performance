@@ -15,7 +15,9 @@ const Evaluations = () => {
   const [formData, setFormData] = useState({
     employe_id: employeId || '',
     indicateur_id: '',
-    realisation: ''
+    realisation: '',
+    mois: new Date().getMonth() + 1,
+    annee: new Date().getFullYear()
   });
 
   const [employees, setEmployees] = useState([]);
@@ -44,51 +46,36 @@ const Evaluations = () => {
   // FETCH EMPLOYES
   // ===============================
   const fetchEmployees = async () => {
-
     try {
-
       const res = await axios.get(
         'http://localhost:8000/employes/',
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setEmployees(res.data);
-
     } catch (err) {
-
       setError("Erreur lors du chargement des employés");
-
     }
-
   };
 
   // ===============================
   // FETCH INDICATEURS
   // ===============================
   const fetchIndicateurs = async () => {
-
     try {
-
       const res = await axios.get(
         'http://localhost:8000/indicateurs/',
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setIndicateurs(res.data);
-
     } catch (err) {
-
       setError("Erreur lors du chargement des indicateurs");
-
     }
-
   };
 
   // ===============================
   // SUBMIT EVALUATION
   // ===============================
   const handleSubmit = async (e) => {
-
     e.preventDefault();
 
     setLoading(true);
@@ -96,15 +83,14 @@ const Evaluations = () => {
     setSuccess('');
 
     try {
-
       await axios.post(
         'http://localhost:8000/evaluations/',
         {
           employe_id: parseInt(formData.employe_id),
           indicateur_id: parseInt(formData.indicateur_id),
           realisation: parseFloat(formData.realisation),
-          mois: new Date().getMonth() + 1,
-          annee: new Date().getFullYear()
+          mois: formData.mois,
+          annee: formData.annee
         },
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -125,25 +111,18 @@ const Evaluations = () => {
       });
 
     } catch (err) {
-
       console.error(err);
       setError("Erreur lors de l'ajout");
-
     } finally {
-
       setLoading(false);
-
     }
-
   };
 
   // ===============================
   // RENDER
   // ===============================
   return (
-
     <div className="space-y-8">
-
       <h1 className="text-2xl font-bold">
         Évaluation de l'employé
       </h1>
@@ -166,13 +145,11 @@ const Evaluations = () => {
               className="w-full border rounded p-2"
             >
               <option value="">Sélectionner un employé</option>
-
               {employees.map(e => (
                 <option key={e.id} value={e.id}>
                   {e.nom}
                 </option>
               ))}
-
             </select>
           )}
 
@@ -186,13 +163,11 @@ const Evaluations = () => {
             className="w-full border rounded p-2"
           >
             <option value="">Sélectionner un indicateur</option>
-
             {indicateurs.map(i => (
               <option key={i.id} value={i.id}>
                 {i.libelle}
               </option>
             ))}
-
           </select>
 
           {/* REALISATION */}
@@ -207,25 +182,55 @@ const Evaluations = () => {
             className="w-full border rounded p-2"
           />
 
+          {/* MOIS */}
+          <select
+            value={formData.mois}
+            onChange={(e) =>
+              setFormData({ ...formData, mois: parseInt(e.target.value) })
+            }
+            className="w-full border rounded p-2"
+          >
+            <option value={1}>Janvier</option>
+            <option value={2}>Février</option>
+            <option value={3}>Mars</option>
+            <option value={4}>Avril</option>
+            <option value={5}>Mai</option>
+            <option value={6}>Juin</option>
+            <option value={7}>Juillet</option>
+            <option value={8}>Août</option>
+            <option value={9}>Septembre</option>
+            <option value={10}>Octobre</option>
+            <option value={11}>Novembre</option>
+            <option value={12}>Décembre</option>
+          </select>
+
+          {/* ANNEE */}
+          <select
+            value={formData.annee}
+            onChange={(e) =>
+              setFormData({ ...formData, annee: parseInt(e.target.value) })
+            }
+            className="w-full border rounded p-2"
+          >
+            <option value={2023}>2023</option>
+            <option value={2024}>2024</option>
+            <option value={2025}>2025</option>
+            <option value={2026}>2026</option>
+          </select>
+
           <button
             type="submit"
             disabled={loading}
             className="bg-blue-600 text-white px-4 py-2 rounded flex items-center"
           >
             <PlusCircleIcon className="h-5 w-5 mr-2" />
-
             {loading ? "Enregistrement..." : "Ajouter"}
-
           </button>
 
         </form>
-
       </div>
-
     </div>
-
   );
-
 };
 
 export default Evaluations;
