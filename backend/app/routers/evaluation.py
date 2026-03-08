@@ -17,7 +17,6 @@ from tortoise.contrib.pydantic import pydantic_model_creator
 
 router = APIRouter(prefix="/evaluations", tags=["Évaluations"])
 
-
 # =====================================================
 # MODELES PYDANTIC
 # =====================================================
@@ -34,7 +33,6 @@ Evaluation_Pydantic = pydantic_model_creator(
     include=("id", "employe", "mois", "annee", "total_score", "details")
 )
 
-
 # =====================================================
 # CREER UNE EVALUATION
 # =====================================================
@@ -44,27 +42,20 @@ async def creer_evaluation(
     data: EvaluationCreate,
     current_user: User = Depends(get_current_user)
 ):
-
-    # vérifier employé
     employe = await Employe.get_or_none(id=data.employe_id)
     if not employe:
         raise HTTPException(status_code=404, detail="Employé non trouvé")
 
-    # vérifier indicateur
     indicateur = await Indicateur.get_or_none(id=data.indicateur_id).prefetch_related("objectif")
     if not indicateur:
         raise HTTPException(status_code=404, detail="Indicateur non trouvé")
 
-    # restriction RESPONSABLE
     if current_user.role == RoleEnum.RESPONSABLE:
-
         employe_service = await employe.service
         current_user_service = await current_user.service
-
         if employe_service.id != current_user_service.id:
             raise HTTPException(status_code=403, detail="Interdit pour ce service")
 
-    # créer ou récupérer évaluation
     evaluation, created = await Evaluation.get_or_create(
         employe=employe,
         mois=data.mois,
@@ -76,19 +67,15 @@ async def creer_evaluation(
     if indicateur.type == TypeIndicateurEnum.QUANTITATIF:
         note = (data.realisation / indicateur.valeur_cible) * 100 if indicateur.valeur_cible else 0
     else:
-        note = data.realisation
+        note = data.realisation  # pour qualitatif, la note peut être directement saisie ou mappée
 
     note = max(0, min(100, note))
 
-    # ============================
-    # VERIFIER DOUBLON INDICATEUR
-    # ============================
-
+    # vérifier doublon indicateur
     detail_existant = await EvaluationDetail.get_or_none(
         evaluation=evaluation,
         indicateur=indicateur
     )
-
     if detail_existant:
         raise HTTPException(
             status_code=400,
@@ -105,9 +92,7 @@ async def creer_evaluation(
 
     # recalcul score total
     details = await EvaluationDetail.filter(evaluation=evaluation)
-
     total = sum(d.note for d in details) / len(details) if details else 0
-
     evaluation.total_score = total
     await evaluation.save()
 
@@ -117,14 +102,12 @@ async def creer_evaluation(
         "total_actuel": total
     }
 
-
 # =====================================================
 # LISTER TOUTES LES EVALUATIONS
 # =====================================================
 
 @router.get("/", response_model=list[dict])
 async def lister_evaluations(current_user: User = Depends(get_current_user)):
-
     query = Evaluation.all().prefetch_related(
         "employe",
         "details",
@@ -132,21 +115,15 @@ async def lister_evaluations(current_user: User = Depends(get_current_user)):
     ).order_by("-annee", "-mois")
 
     if current_user.role == RoleEnum.RESPONSABLE:
-
         current_user_service = await current_user.service
-
         query = query.filter(employe__service=current_user_service)
 
     evaluations = await query
-
     results = []
 
     for eval_item in evaluations:
-
         details_data = []
-
         for detail in eval_item.details:
-
             details_data.append({
                 "id": detail.id,
                 "indicateur": {
@@ -174,9 +151,8 @@ async def lister_evaluations(current_user: User = Depends(get_current_user)):
 
     return results
 
-
 # =====================================================
-# RESULTAT D'EVALUATION PAR EMPLOYE
+# RESULTAT D'EVALUATION PAR EMPLOYE (QUALITATIF AMELIORE)
 # =====================================================
 
 @router.get("/employe/{employe_id}", response_model=list[dict])
@@ -186,15 +162,12 @@ async def resultat_par_employe(
 ):
 
     employe = await Employe.get_or_none(id=employe_id)
-
     if not employe:
         raise HTTPException(status_code=404, detail="Employé non trouvé")
 
     if current_user.role == RoleEnum.RESPONSABLE:
-
         employe_service = await employe.service
         current_user_service = await current_user.service
-
         if employe_service.id != current_user_service.id:
             raise HTTPException(status_code=403, detail="Accès refusé")
 
@@ -202,22 +175,27 @@ async def resultat_par_employe(
         employe=employe
     ).prefetch_related(
         "details",
-        "details__indicateur"
+        "details__indicateur",
+        "details__indicateur__objectif"
     ).order_by("-annee", "-mois")
 
     results = []
 
     for ev in evaluations:
-
         lignes = []
-
         for d in ev.details:
+            if d.indicateur.type == TypeIndicateurEnum.QUALITATIF:
+                objectif = d.indicateur.objectif.libelle if d.indicateur.objectif else None
+                realisation = d.realisation
+            else:
+                objectif = d.indicateur.valeur_cible
+                realisation = d.realisation
 
             lignes.append({
                 "indicateur": d.indicateur.libelle,
                 "type": d.indicateur.type,
-                "objectif": d.indicateur.valeur_cible,
-                "realisation": d.realisation,
+                "objectif": objectif,
+                "realisation": realisation,
                 "note": d.note
             })
 
@@ -230,7 +208,6 @@ async def resultat_par_employe(
         })
 
     return results
-
 
 # =====================================================
 # OBTENIR UNE EVALUATION
@@ -252,15 +229,12 @@ async def obtenir_evaluation(
         raise HTTPException(status_code=404, detail="Évaluation non trouvée")
 
     if current_user.role == RoleEnum.RESPONSABLE:
-
         employe_service = await evaluation.employe.service
         current_user_service = await current_user.service
-
         if employe_service.id != current_user_service.id:
             raise HTTPException(status_code=403, detail="Accès refusé")
 
     return await Evaluation_Pydantic.from_tortoise_orm(evaluation)
-
 
 # =====================================================
 # SUPPRIMER UNE EVALUATION
@@ -278,10 +252,8 @@ async def supprimer_evaluation(
         raise HTTPException(status_code=404, detail="Évaluation non trouvée")
 
     if current_user.role == RoleEnum.RESPONSABLE:
-
         employe_service = await evaluation.employe.service
         current_user_service = await current_user.service
-
         if employe_service.id != current_user_service.id:
             raise HTTPException(status_code=403, detail="Interdit pour ce service")
 
