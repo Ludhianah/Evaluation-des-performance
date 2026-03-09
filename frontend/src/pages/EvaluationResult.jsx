@@ -3,7 +3,6 @@ import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 
 const EvaluationResult = () => {
-
   const { employeId } = useParams();
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
@@ -12,152 +11,103 @@ const EvaluationResult = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (employeId) {
-      fetchEmployeeEvaluations();
-    }
+    if (employeId) fetchEmployeeEvaluations();
   }, [employeId]);
 
   const fetchEmployeeEvaluations = async () => {
     try {
-
       const response = await axios.get(
         `http://localhost:8000/evaluations/employe/${employeId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
+        { headers: { Authorization: `Bearer ${token}` } }
       );
-
       setEvaluations(response.data);
-
     } catch (error) {
-
       console.error("Erreur lors du chargement des évaluations :", error);
-
     } finally {
-
       setLoading(false);
-
     }
   };
 
   if (loading) {
-    return <div className="p-6">Chargement...</div>;
+    return (
+      <div className="flex justify-center items-center h-32">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
+      </div>
+    );
   }
 
   return (
-
-    <div className="p-6">
+    <div className="p-6 space-y-6 max-w-4xl mx-auto">
 
       {/* HEADER */}
-
-      <div className="flex justify-between items-center mb-6">
-
-        <h1 className="text-xl font-bold">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold text-gray-900">
           Résultats des évaluations
         </h1>
-
         <button
           onClick={() => navigate(`/dashboard/evaluations/${employeId}`)}
-          className="bg-blue-600 text-white px-4 py-2 rounded"
+          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition"
         >
           Nouvelle évaluation
         </button>
-
       </div>
 
-      {evaluations && evaluations.length > 0 ? (
-
+      {/* CONTENU */}
+      {evaluations.length > 0 ? (
         evaluations.map((evaluation) => (
-
           <div
             key={evaluation.evaluation_id}
-            className="mb-6 border p-4 rounded"
+            className="bg-white shadow rounded-lg p-4 space-y-4"
           >
-
-            <h2 className="font-semibold mb-3">
+            <h2 className="font-semibold text-gray-800">
               Mois : {evaluation.mois} / {evaluation.annee}
             </h2>
 
-            <table className="w-full border">
-
-              <thead>
-
-                <tr className="bg-gray-100">
-
-                  <th className="border p-2">Type</th>
-                  <th className="border p-2">Indicateur</th>
-                  <th className="border p-2">Objectif</th>
-                  <th className="border p-2">Réalisation</th>
-                  <th className="border p-2">Note</th>
-
-                </tr>
-
-              </thead>
-
-              <tbody>
-
-                {evaluation.details.map((d, index) => (
-
-                  <tr key={index}>
-
-                    <td className="border p-2">
-                      {d.type || "N/A"}
-                    </td>
-
-                    <td className="border p-2">
-                      {d.indicateur}
-                    </td>
-
-                    <td className="border p-2">
-                      {d.objectif}
-                    </td>
-
-                    <td className="border p-2">
-                      {d.realisation}
-                    </td>
-
-                    <td className="border p-2">
-                      {d.note}
-                    </td>
-
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    {["Type", "Indicateur", "Objectif", "Réalisation", "Note"].map((col) => (
+                      <th
+                        key={col}
+                        className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                      >
+                        {col}
+                      </th>
+                    ))}
                   </tr>
-
-                ))}
-
-              </tbody>
-
-              <tfoot>
-
-                <tr className="bg-gray-100 font-semibold">
-
-                  <td colSpan={4} className="border p-2 text-right">
-                    Total
-                  </td>
-
-                  <td className="border p-2">
-                    {evaluation.score_total}
-                  </td>
-
-                </tr>
-
-              </tfoot>
-
-            </table>
-
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-100">
+                  {evaluation.details.map((d, index) => (
+                    <tr key={index} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-3 py-2 text-sm text-gray-700">{d.type || "N/A"}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700">{d.indicateur}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700">{d.objectif}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700">{d.realisation}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700">{d.note}</td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-gray-50 font-semibold">
+                  <tr>
+                    <td colSpan={4} className="px-3 py-2 text-right text-sm text-gray-700">
+                      Total
+                    </td>
+                    <td className="px-3 py-2 text-sm text-gray-700">
+                      {evaluation.score_total}
+                    </td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
           </div>
-
         ))
-
       ) : (
-
-        <p>Aucune évaluation trouvée.</p>
-
+        <p className="text-gray-500">Aucune évaluation trouvée.</p>
       )}
 
     </div>
-
   );
-
 };
 
 export default EvaluationResult;

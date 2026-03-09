@@ -37,14 +37,10 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
     <>
       {/* Bouton mobile */}
       <button
-        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+        className="md:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-lg shadow border border-gray-200"
         onClick={() => setIsOpen(!isOpen)}
       >
-        {isOpen ? (
-          <XMarkIcon className="h-6 w-6 text-gray-700" />
-        ) : (
-          <Bars3Icon className="h-6 w-6 text-gray-700" />
-        )}
+        {isOpen ? <XMarkIcon className="h-6 w-6 text-gray-700" /> : <Bars3Icon className="h-6 w-6 text-gray-700" />}
       </button>
 
       {/* Sidebar */}
@@ -56,10 +52,8 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
         {/* Header */}
         <div className="flex items-center justify-center h-16 border-b border-gray-200 bg-gray-50">
           <div className="text-center">
-            <h1 className="text-xl font-bold text-gray-800">Performance</h1>
-            <p className={`text-xs mt-1 font-medium ${
-              isAdmin ? 'text-blue-600' : 'text-green-600'
-            }`}>
+            <h1 className="text-lg font-bold text-gray-800">Performance</h1>
+            <p className={`text-xs mt-1 font-medium ${isAdmin ? 'text-blue-600' : 'text-green-600'}`}>
               {user?.role}
             </p>
           </div>
@@ -73,21 +67,14 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
               <Link
                 key={item.name}
                 to={item.href}
-                className={`group flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
-                  isActive
-                    ? 'bg-blue-50 text-blue-700 shadow-sm'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                className={`flex items-center px-3 py-2 text-sm font-medium rounded-lg transition-colors duration-200 ${
+                  isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
                 <item.icon
-                  className={`mr-3 h-5 w-5 ${
-                    isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'
-                  }`}
+                  className={`mr-3 h-5 w-5 ${isActive ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-600'}`}
                 />
                 <span className="flex-1">{item.name}</span>
-                {isActive && (
-                  <div className="w-1 h-6 bg-blue-600 rounded-r-lg ml-2" />
-                )}
               </Link>
             );
           })}
@@ -121,12 +108,7 @@ const Sidebar = ({ isOpen, setIsOpen }) => {
       </div>
 
       {/* Overlay pour mobile */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-30 bg-black/30 md:hidden"
-          onClick={() => setIsOpen(false)}
-        />
-      )}
+      {isOpen && <div className="fixed inset-0 z-30 bg-black/30 md:hidden" onClick={() => setIsOpen(false)} />}
     </>
   );
 };

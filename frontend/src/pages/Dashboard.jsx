@@ -3,12 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import {
   ChartBarIcon,
-  Cog6ToothIcon,
   DocumentTextIcon,
   UserGroupIcon,
-  ClipboardDocumentCheckIcon,
-  PresentationChartLineIcon,
   TrophyIcon,
+  PresentationChartLineIcon,
+  ClipboardDocumentCheckIcon,
 } from '@heroicons/react/24/outline';
 
 const Dashboard = () => {
@@ -27,115 +26,65 @@ const Dashboard = () => {
       ? [
           {
             name: 'Objectifs',
-            description: 'Définir et suivre les objectifs des employés',
+            description: 'Suivre les objectifs des employés',
             icon: TrophyIcon,
             href: '/dashboard/objectifs',
-            bgColor: 'bg-blue-50',
-            textColor: 'text-blue-600',
-            borderColor: 'border-blue-200',
+            color: 'blue',
           },
           {
             name: 'Indicateurs',
-            description: 'Configurer les indicateurs de performance',
+            description: 'Configurer les indicateurs',
             icon: PresentationChartLineIcon,
             href: '/dashboard/indicateurs',
-            bgColor: 'bg-purple-50',
-            textColor: 'text-purple-600',
-            borderColor: 'border-purple-200',
+            color: 'purple',
           },
         ]
       : []),
     {
       name: 'Évaluations',
-      description: 'Effectuer les évaluations des employés',
+      description: 'Effectuer les évaluations',
       icon: ClipboardDocumentCheckIcon,
       href: '/dashboard/evaluations',
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-600',
-      borderColor: 'border-green-200',
+      color: 'green',
     },
     {
       name: 'Équipe',
       description: 'Voir la performance de votre équipe',
       icon: UserGroupIcon,
       href: '/dashboard/equipe',
-      bgColor: 'bg-yellow-50',
-      textColor: 'text-yellow-600',
-      borderColor: 'border-yellow-200',
+      color: 'yellow',
     },
   ];
 
+  const statCards = [
+    { title: 'Évaluations complètes', value: `${performanceStats.evaluationsCompletes}%`, icon: ClipboardDocumentCheckIcon, color: 'green' },
+    { title: 'Évaluations en cours', value: performanceStats.evaluationsEnCours, icon: DocumentTextIcon, color: 'yellow' },
+    { title: 'Objectifs atteints', value: `${performanceStats.objectifsAtteints}%`, icon: TrophyIcon, color: 'blue' },
+    { title: 'Indicateurs positifs', value: `${performanceStats.indicateursPositifs}%`, icon: ChartBarIcon, color: 'purple' },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
       {/* En-tête */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Tableau de bord des performances
-          </h1>
-          <p className="mt-1 text-gray-600">
-            Suivez et évaluez les performances de votre équipe en temps réel.
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Tableau de bord</h1>
+          <p className="text-gray-600 mt-1">Suivez les performances de votre équipe en un coup d’œil.</p>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
-            <span className="text-sm font-medium text-gray-700">
-              {user?.username} • {user?.role}
-            </span>
-          </div>
-        </div>
+        <div className="text-gray-700 font-medium">{user?.username} • {user?.role}</div>
       </div>
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[
-          {
-            title: 'Évaluations complètes',
-            value: `${performanceStats.evaluationsCompletes}%`,
-            icon: ClipboardDocumentCheckIcon,
-            color: 'green',
-            progress: performanceStats.evaluationsCompletes,
-          },
-          {
-            title: 'Évaluations en cours',
-            value: performanceStats.evaluationsEnCours,
-            icon: PresentationChartLineIcon,
-            color: 'yellow',
-          },
-          {
-            title: 'Objectifs atteints',
-            value: `${performanceStats.objectifsAtteints}%`,
-            icon: TrophyIcon,
-            color: 'blue',
-            progress: performanceStats.objectifsAtteints,
-          },
-          {
-            title: 'Indicateurs positifs',
-            value: `${performanceStats.indicateursPositifs}%`,
-            icon: ChartBarIcon,
-            color: 'purple',
-            progress: performanceStats.indicateursPositifs,
-          },
-        ].map((stat, index) => (
-          <div key={index} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-gray-500">{stat.title}</p>
-                <p className="mt-1 text-3xl font-bold text-gray-900">{stat.value}</p>
-              </div>
-              <div className={`p-3 rounded-lg bg-${stat.color}-100`}>
-                <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
-              </div>
+        {statCards.map((stat) => (
+          <div key={stat.title} className="bg-white p-4 rounded-xl shadow border border-gray-100 flex items-center justify-between">
+            <div>
+              <p className="text-sm text-gray-500">{stat.title}</p>
+              <p className="mt-1 text-2xl font-bold text-gray-900">{stat.value}</p>
             </div>
-            {stat.progress && (
-              <div className="mt-4 h-2 bg-gray-200 rounded-full">
-                <div
-                  className={`h-2 rounded-full bg-${stat.color}-500`}
-                  style={{ width: `${stat.progress}%` }}
-                ></div>
-              </div>
-            )}
+            <div className={`p-2 rounded-lg bg-${stat.color}-100`}>
+              <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
+            </div>
           </div>
         ))}
       </div>
@@ -143,30 +92,23 @@ const Dashboard = () => {
       {/* Accès rapide */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold text-gray-800">Accès rapide</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickAccessCards.map((card) => (
             <Link
               key={card.name}
               to={card.href}
-              className={`group ${card.bgColor} p-6 rounded-xl border ${card.borderColor} shadow-sm hover:shadow-md transition-all`}
+              className={`group bg-white p-4 rounded-xl border border-gray-100 shadow hover:shadow-md transition`}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className={`text-lg font-semibold ${card.textColor} group-hover:opacity-80`}>
-                    {card.name}
-                  </h3>
-                  <p className="mt-2 text-sm text-gray-600">{card.description}</p>
+                  <h3 className={`text-lg font-semibold text-gray-900`}>{card.name}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{card.description}</p>
                 </div>
-                <div className={`p-3 rounded-lg ${card.bgColor} group-hover:bg-opacity-80`}>
-                  <card.icon className={`h-6 w-6 ${card.textColor}`} />
+                <div className={`p-2 rounded-lg bg-${card.color}-50`}>
+                  <card.icon className={`h-6 w-6 text-${card.color}-600`} />
                 </div>
               </div>
-              <div className={`mt-6 flex items-center text-sm font-medium ${card.textColor} group-hover:translate-x-1 transition-transform`}>
-                Accéder
-                <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </div>
+              <p className="mt-3 text-sm text-gray-700 font-medium group-hover:underline">Accéder →</p>
             </Link>
           ))}
         </div>
