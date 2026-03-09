@@ -28,6 +28,20 @@ const EvaluationResult = () => {
     }
   };
 
+  const handleDelete = async (evaluationId) => {
+    if (!window.confirm("Voulez-vous vraiment supprimer cette évaluation ?")) return;
+
+    try {
+      await axios.delete(
+        `http://localhost:8000/evaluations/${evaluationId}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setEvaluations(evaluations.filter((e) => e.evaluation_id !== evaluationId));
+    } catch (error) {
+      console.error("Erreur lors de la suppression :", error);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-32">
@@ -36,9 +50,11 @@ const EvaluationResult = () => {
     );
   }
 
+  // On filtre pour garder uniquement les évaluations avec des détails
+  const evaluationsWithDetails = evaluations.filter(e => e.details.length > 0);
+
   return (
     <div className="p-6 space-y-6 max-w-4xl mx-auto">
-
       {/* HEADER */}
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-gray-900">
@@ -53,15 +69,23 @@ const EvaluationResult = () => {
       </div>
 
       {/* CONTENU */}
-      {evaluations.length > 0 ? (
-        evaluations.map((evaluation) => (
+      {evaluationsWithDetails.length > 0 ? (
+        evaluationsWithDetails.map((evaluation) => (
           <div
             key={evaluation.evaluation_id}
             className="bg-white shadow rounded-lg p-4 space-y-4"
           >
-            <h2 className="font-semibold text-gray-800">
-              Mois : {evaluation.mois} / {evaluation.annee}
-            </h2>
+            <div className="flex justify-between items-center">
+              <h2 className="font-semibold text-gray-800">
+                Mois : {evaluation.mois} / {evaluation.annee}
+              </h2>
+              <button
+                onClick={() => handleDelete(evaluation.evaluation_id)}
+                className="bg-red-50 text-red-600 px-3 py-1 rounded-md hover:bg-red-100 transition"
+              >
+                Supprimer
+              </button>
+            </div>
 
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-gray-200">
@@ -84,7 +108,9 @@ const EvaluationResult = () => {
                       <td className="px-3 py-2 text-sm text-gray-700">{d.indicateur}</td>
                       <td className="px-3 py-2 text-sm text-gray-700">{d.objectif}</td>
                       <td className="px-3 py-2 text-sm text-gray-700">{d.realisation}</td>
-                      <td className="px-3 py-2 text-sm text-gray-700">{d.note}</td>
+                      <td className="px-3 py-2 text-sm text-gray-700">
+                        {Number(d.note).toFixed(2)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -94,7 +120,7 @@ const EvaluationResult = () => {
                       Total
                     </td>
                     <td className="px-3 py-2 text-sm text-gray-700">
-                      {evaluation.score_total}
+                      {Number(evaluation.score_total).toFixed(2)}
                     </td>
                   </tr>
                 </tfoot>
@@ -105,7 +131,6 @@ const EvaluationResult = () => {
       ) : (
         <p className="text-gray-500">Aucune évaluation trouvée.</p>
       )}
-
     </div>
   );
 };

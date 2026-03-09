@@ -19,38 +19,31 @@ export const AuthProvider = ({ children }) => {
 
   const API_BASE_URL = 'http://localhost:8000';
 
-  // Login function
+  // LOGIN
   const login = async (username, password) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Use form data format for OAuth2PasswordRequestForm
       const formData = new URLSearchParams();
       formData.append('username', username);
       formData.append('password', password);
-      
+
       const response = await axios.post(`${API_BASE_URL}/auth/token`, formData, {
-        headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
-        }
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       });
-      
+
       const { access_token } = response.data;
-      
-      // Store token in localStorage
+
       localStorage.setItem('token', access_token);
       setToken(access_token);
-      
-      // Get user info
+
+      // Récupérer les infos de l'utilisateur
       const userResponse = await axios.get(`${API_BASE_URL}/auth/me`, {
-        headers: {
-          Authorization: `Bearer ${access_token}`
-        }
+        headers: { Authorization: `Bearer ${access_token}` },
       });
-      
+
       setUser(userResponse.data);
-      
       return { success: true, user: userResponse.data };
     } catch (err) {
       const errorMessage = err.response?.data?.detail || 'Login failed';
@@ -61,22 +54,17 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Register function
-  const register = async (username, password, role = 'RESPONSABLE', service_id = null) => {
+  // REGISTER
+  // userData = { username, password, role, service_id }
+  const register = async (userData) => {
     setLoading(true);
     setError(null);
-    
+
     try {
-      const response = await axios.post(`${API_BASE_URL}/auth/register`, {
-        username,
-        password,
-        role,
-        service_id
-      });
-      
+      const response = await axios.post(`${API_BASE_URL}/auth/register`, userData);
       return { success: true, user: response.data };
     } catch (err) {
-      const errorMessage = err.response?.data?.detail || 'Registration failed';
+      const errorMessage = err.response?.data || 'Registration failed';
       setError(errorMessage);
       return { success: false, error: errorMessage };
     } finally {
@@ -84,7 +72,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
+  // LOGOUT
   const logout = () => {
     localStorage.removeItem('token');
     setToken(null);
@@ -92,48 +80,34 @@ export const AuthProvider = ({ children }) => {
     setError(null);
   };
 
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    return !!token && !!user;
-  };
+  // Check authentication
+  const isAuthenticated = () => !!token && !!user;
 
   // Get user role
-  const getUserRole = () => {
-    return user?.role || null;
-  };
+  const getUserRole = () => user?.role || null;
 
-  // Check if user is admin
-  const isAdmin = () => {
-    return user?.role === 'ADMIN';
-  };
+  const isAdmin = () => user?.role === 'ADMIN';
+  const isResponsable = () => user?.role === 'RESPONSABLE';
 
-  // Check if user is responsable
-  const isResponsable = () => {
-    return user?.role === 'RESPONSABLE';
-  };
-
-  // Verify token on app load
+  // Vérifier le token au chargement de l'app
   useEffect(() => {
     const verifyToken = async () => {
       const storedToken = localStorage.getItem('token');
       if (storedToken) {
         try {
           const response = await axios.get(`${API_BASE_URL}/auth/me`, {
-            headers: {
-              Authorization: `Bearer ${storedToken}`
-            }
+            headers: { Authorization: `Bearer ${storedToken}` },
           });
           setUser(response.data);
           setToken(storedToken);
         } catch (err) {
-          // Token is invalid, clear it
+          // Token invalide
           localStorage.removeItem('token');
           setToken(null);
           setUser(null);
         }
       }
     };
-
     verifyToken();
   }, []);
 
@@ -146,12 +120,11 @@ export const AuthProvider = ({ children }) => {
     register,
     logout,
     isAuthenticated,
-    setError
+    getUserRole,
+    isAdmin,
+    isResponsable,
+    setError,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
